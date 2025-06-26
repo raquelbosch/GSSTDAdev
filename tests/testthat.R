@@ -1,6 +1,6 @@
 library(testthat)
-library(GSSTDA)
+library(GSSTDAdev)
 
-test_check("GSSTDA")
+test_check("GSSTDAdev")
 
 
