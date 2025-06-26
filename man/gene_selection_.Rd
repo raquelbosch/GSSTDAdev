@@ -9,8 +9,10 @@ gene_selection_(
   survival_time,
   survival_event,
   control_tag_cases,
-  gen_select_type,
-  num_gen_select,
+  gene_select_surv_type,
+  num_gen_select_for_fun_filt,
+  gene_select_mapper_metric,
+  num_gen_select_for_mapper,
   matrix_disease_component = NULL
 )
 }
@@ -32,21 +34,41 @@ columns of \code{full_data}. Patients must be in the same order as in
 be indicated whether the event has occurred (1) or not (0). Only these
 values are valid and healthy patients must have an NA value.}
 
-\item{control_tag_cases}{Numeric vector with the indices of the columns
+\item{control_tag_cases}{Numeric vector with the indices of the columns of
+\code{full_data} and/or \code{matrix_disease_component}
 corresponding to the healthy sample patients.}
 
-\item{gen_select_type}{Option. Options on how to select the genes to be
-used in the mapper. Select the "Abs" option, which means that the
-genes with the highest absolute value are chosen, or the
-"Top_Bot" option, which means that half of the selected
-genes are those with the highest value (positive value, i.e.
-worst survival prognosis) and the other half are those with the
-lowest value (negative value, i.e. best prognosis). "Top_Bot" default option.}
+\item{gene_select_surv_type}{Option. Options on how to select the genes to be
+used in the calculation of the values of the filter function (and in the gene
+selection for Mapper if the option "sd_surv" has been chosen). Select the
+"Abs" option, which means that the genes with the highest absolute value are
+chosen, or the "Top_Bot" option, which means that half of the selected genes
+are those with the highest value (positive value, i.e. worst survival
+prognosis) and the other half are those with the lowest value (negative
+value, i.e. best prognosis). "Top_Bot" default option.}
 
-\item{num_gen_select}{Number of genes to be selected to be used in mapper.}
+\item{num_gen_select_for_fun_filt}{Number of genes to be selected to be used
+for the calculation of the values of the filter function.}
+
+\item{gene_select_mapper_metric}{Gene selection criteria for Mapper. Choose as
+selection criteria between:
+\itemize{
+\item "mad": those genes in the disease component matrix with the highest mean
+absolute deviation will be selected
+\item "sd": those genes with the highest standard deviation will be selected
+\item “iqr": those genes with the highest interquartile range will be selected
+\item "mean_sd": to choose genes with high mean and standard deviation simultaneously
+\item "sd_surv": these option selects genes for mapper based on the product of standard
+deviation of the genes in the disease component matrix plus one times
+the Z score obtained by fitting a cox proportional hazard model to the level
+of each gene.
+}}
+
+\item{num_gen_select_for_mapper}{Number of genes to be selected to be used
+in mapper.}
 
 \item{matrix_disease_component}{Optional, only necessary in case of gene
-selection after dsga has been performed. Matrix of the disease components
+selection after DSGA has been performed. Matrix of the disease components
 (the transformed \code{full_data} matrix from which the normal component has
 been removed) from the \code{dsga_function}.}
 }
@@ -60,10 +82,13 @@ performed from a \code{dsga_object} or \code{full_data} in the opposite case.
 proportional hazard models: with the regression coefficients, the odds ratios,
 the standard errors of each coefficient, the Z values (coef/se_coef) and
 the p-values for each Z value)
-\item a vector with the name of the selected genes
+\item a vector with the name of the selected genes for mapper
+(\code{genes_selected_mapper}) and for the calculation of the values of the
+filter function (\code{genes_selected_fun_filt}).
 \item the matrix of disease components with only the rows of the selected genes
 (\code{genes_disease_component})
-\item and the vector of the values of the filter function.
+\item and the vector of the values of the filter function of pathological samples
+\code{filter_values}.
 }
 }
 \description{
@@ -71,9 +96,10 @@ Private function to gene selection
 }
 \examples{
 \donttest{
-gen_select_type <- "Top_Bot"
+gene_select_surv_type <- "Top_Bot"
 percent_gen_select <- 10
 control_tag_cases <- which(case_tag == "NT")
 gene_selection_obj <- gene_selection_(full_data, survival_time, survival_event,
-control_tag_cases, gen_select_type ="top_bot", num_gen_select = 10)}
+control_tag_cases, gene_select_surv_type ="top_bot", num_gen_select_for_fun_filt = 200,
+gene_select_mapper_metric="mad", num_gen_select_for_mapper = 1000)}
 }

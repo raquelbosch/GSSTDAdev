@@ -126,15 +126,30 @@ dsga <- function(full_data, survival_time, survival_event, case_tag, control_tag
 #' be used to indicate whether the patient's sample is pathological.
 #' The user will then be asked which one indicates whether the patient is
 #' healthy. Only two values are valid in the vector in total.
-#' @param gen_select_type Option. Options on how to select the genes to be
-#' used in the mapper. Select the "Abs" option, which means that the
-#' genes with the highest absolute value are chosen, or the
-#' "Top_Bot" option, which means that half of the selected
+#' @param gene_select_surv_type Option. Options on how to select the genes to be
+#' used in the calculation of the values of the filter function (and in the gene
+#' selection for Mapper if the option "sd_surv" has been chosen) Select the
+#' "Abs" option, which means that the genes with the highest absolute value are
+#' chosen, or the "Top_Bot" option, which means that half of the selected
 #' genes are those with the highest value (positive value, i.e.
 #' worst survival prognosis) and the other half are those with the
 #' lowest value (negative value, i.e. best prognosis). "Top_Bot" default option.
-#' @param percent_gen_select Percentage (from zero to one hundred) of genes
-#' to be selected to be used in mapper. 10 default option.
+#' @param percent_gen_select_for_fun_filt Percentage (from zero to one hundred)
+#' of genes to be selected to be used in the calculation of the values of the
+#' filter function. 1 default option.
+#' @param gene_select_mapper_metric Gene selection criteria for Mapper. Choose as
+#' selection criteria between:
+#' - "mad": those genes in the disease component matrix with the highest mean
+#' absolute deviation will be selected
+#' - "sd": those genes with the highest standard deviation will be selected
+#' - “iqr": those genes with the highest interquartile range will be selected
+#' - "mean_sd": to choose genes with high mean and standard deviation simultaneously
+#' - "sd_surv": these option selects genes for mapper based on the product of standard
+#' deviation of the genes in the disease component matrix plus one times
+#' the Z score obtained by fitting a cox proportional hazard model to the level
+#' of each gene. "mad" default option.
+#' @param percent_gen_select_for_mapper Percentage (from zero to one hundred)
+#' of genes to be selected to be used in Mapper. 5 default option.
 #' @param na.rm \code{logical}. If \code{TRUE}, \code{NA} rows are omitted.
 #' If \code{FALSE}, an error occurs in case of \code{NA} rows. TRUE default
 #' option.
@@ -155,9 +170,13 @@ dsga <- function(full_data, survival_time, survival_event, case_tag, control_tag
 #' "survival_event" = survival_event, "case_tag" = case_tag)
 #' class(data_object) <- "data_object"
 #' gene_selection_obj <- gene_selection(data_object,
-#' gen_select_type ="top_bot", percent_gen_select=10)}
-gene_selection <- function(data_object, gen_select_type,
-                          percent_gen_select, na.rm = TRUE){
+#' gene_select_surv_type ="top_bot", percent_gen_select_for_fun_filt=1,
+#' gene_select_mapper_metric="mad", percent_gen_select_for_mapper=5)}
+gene_selection <- function(data_object, gene_select_surv_type = "Top_Bot",
+                           percent_gen_select_for_fun_filt = 1,
+                           gene_select_mapper_metric = "mad",
+                           percent_gen_select_for_mapper = 5,
+                           na.rm = TRUE){
   UseMethod("gene_selection")
 }
 
@@ -177,18 +196,34 @@ gene_selection <- function(data_object, gen_select_type,
 #' \code{full_data}. For the the patients with pathological sample should
 #' be indicated whether the event has occurred (1) or not (0). Only these
 #' values are valid and healthy patients must have an NA value.
-#' @param control_tag_cases Numeric vector with the indices of the columns
+#' @param control_tag_cases Numeric vector with the indices of the columns of
+#' \code{full_data} and/or \code{matrix_disease_component}
 #' corresponding to the healthy sample patients.
-#' @param gen_select_type Option. Options on how to select the genes to be
-#' used in the mapper. Select the "Abs" option, which means that the
-#' genes with the highest absolute value are chosen, or the
-#' "Top_Bot" option, which means that half of the selected
-#' genes are those with the highest value (positive value, i.e.
-#' worst survival prognosis) and the other half are those with the
-#' lowest value (negative value, i.e. best prognosis). "Top_Bot" default option.
-#' @param num_gen_select Number of genes to be selected to be used in mapper.
+#' @param gene_select_surv_type Option. Options on how to select the genes to be
+#' used in the calculation of the values of the filter function (and in the gene
+#' selection for Mapper if the option "sd_surv" has been chosen). Select the
+#' "Abs" option, which means that the genes with the highest absolute value are
+#' chosen, or the "Top_Bot" option, which means that half of the selected genes
+#' are those with the highest value (positive value, i.e. worst survival
+#' prognosis) and the other half are those with the lowest value (negative
+#' value, i.e. best prognosis). "Top_Bot" default option.
+#' @param num_gen_select_for_fun_filt Number of genes to be selected to be used
+#' for the calculation of the values of the filter function.
+#' @param gene_select_mapper_metric Gene selection criteria for Mapper. Choose as
+#' selection criteria between:
+#' - "mad": those genes in the disease component matrix with the highest mean
+#' absolute deviation will be selected
+#' - "sd": those genes with the highest standard deviation will be selected
+#' - “iqr": those genes with the highest interquartile range will be selected
+#' - "mean_sd": to choose genes with high mean and standard deviation simultaneously
+#' - "sd_surv": these option selects genes for mapper based on the product of standard
+#' deviation of the genes in the disease component matrix plus one times
+#' the Z score obtained by fitting a cox proportional hazard model to the level
+#' of each gene.
+#' @param num_gen_select_for_mapper Number of genes to be selected to be used
+#' in mapper.
 #' @param matrix_disease_component Optional, only necessary in case of gene
-#' selection after dsga has been performed. Matrix of the disease components
+#' selection after DSGA has been performed. Matrix of the disease components
 #' (the transformed \code{full_data} matrix from which the normal component has
 #' been removed) from the \code{dsga_function}.
 #' @return A \code{gene_selection_object}. It contains:
@@ -199,27 +234,35 @@ gene_selection <- function(data_object, gen_select_type,
 #' proportional hazard models: with the regression coefficients, the odds ratios,
 #' the standard errors of each coefficient, the Z values (coef/se_coef) and
 #' the p-values for each Z value)
-#' - a vector with the name of the selected genes
+#' - a vector with the name of the selected genes for mapper
+#' (\code{genes_selected_mapper}) and for the calculation of the values of the
+#' filter function (\code{genes_selected_fun_filt}).
 #' - the matrix of disease components with only the rows of the selected genes
 #' (\code{genes_disease_component})
-#' - and the vector of the values of the filter function.
+#' - and the vector of the values of the filter function of pathological samples
+#' \code{filter_values}.
 #' @export
 #' @examples
 #' \donttest{
-#' gen_select_type <- "Top_Bot"
+#' gene_select_surv_type <- "Top_Bot"
 #' percent_gen_select <- 10
 #' control_tag_cases <- which(case_tag == "NT")
 #' gene_selection_obj <- gene_selection_(full_data, survival_time, survival_event,
-#' control_tag_cases, gen_select_type ="top_bot", num_gen_select = 10)}
+#' control_tag_cases, gene_select_surv_type ="top_bot", num_gen_select_for_fun_filt = 200,
+#' gene_select_mapper_metric="mad", num_gen_select_for_mapper = 1000)}
 gene_selection_ <- function(full_data, survival_time, survival_event,
-                           control_tag_cases, gen_select_type, num_gen_select,
-                           matrix_disease_component = NULL){
+                            control_tag_cases, gene_select_surv_type,
+                            num_gen_select_for_fun_filt,
+                            gene_select_mapper_metric,
+                            num_gen_select_for_mapper,
+                            matrix_disease_component = NULL){
 
   message("\nBLOCK II: The gene selection is started\n")
 
   if(is.null(matrix_disease_component)) {
     matrix_disease_component <- full_data
   }
+
   #Remove NAN's values (case_tag == control_tag) of survival_time and survival_event
   survival_time <- survival_time[-control_tag_cases]
   survival_event <- survival_event[-control_tag_cases]
@@ -231,21 +274,36 @@ gene_selection_ <- function(full_data, survival_time, survival_event,
   #provided dataset
   cox_all_matrix <- cox_all_genes(case_full_data, survival_time, survival_event)
 
-  #Selects genes for mapper
-  genes_selected <- gene_selection_surv(case_disease_component, cox_all_matrix, gen_select_type,
-                                        num_gen_select)
+  # Select genes in full_data for filter function calulation
+  genes_selected_fun_filt <- gene_selection_fun_filt(cox_all_matrix,
+                                                     gene_select_surv_type,
+                                                     num_gen_select_for_fun_filt)
+  # Selects genes for mapper
+  if (gene_select_mapper_metric == "sd_surv"){
+    genes_selected_mapper <- gene_selection_by_sd_surv(case_disease_component,
+                                                       cox_all_matrix, gene_select_surv_type,
+                                                       num_gen_select_for_mapper)
+  } else {
+    genes_selected_mapper <- gene_selection_mapper_by_variability(case_disease_component,
+                                                                  num_gen_select_for_mapper,
+                                                                  gene_select_mapper_metric)
+  }
 
-  # Select genes in matrix_disease_component or full_data (if don't apply Block I)
-  genes_disease_component <- matrix_disease_component[genes_selected,]
-
-  # Filter the genes_disease_component
-  filter_values <- lp_norm_k_powers_surv(genes_disease_component, 2, 1, cox_all_matrix)
+  # Calculate the values of the filter function, it is necessary to select
+  # the rows of the genes chosen
+  filter_values <- calculate_filter_function(case_full_data[genes_selected_fun_filt,],
+                                             survival_time, survival_event)
 
   message("\nBLOCK II: The gene selection is finished\n")
 
-  gene_selection_object <- list( "data" = matrix_disease_component,
+  # Select genes in matrix_disease_component or full_data (if don't apply Block I)
+  # for mapper
+  genes_disease_component <- matrix_disease_component[genes_selected_mapper,]
+
+  gene_selection_object <- list("data" = matrix_disease_component,
                                 "cox_all_matrix" = cox_all_matrix,
-                                "genes_selected" = genes_selected,
+                                "genes_selected_for_mapper" = genes_selected_mapper,
+                                "genes_selected_for_fun_filt" = genes_selected_fun_filt,
                                 "genes_disease_component" = genes_disease_component,
                                 "filter_values" = filter_values
   )
@@ -258,15 +316,29 @@ gene_selection_ <- function(full_data, survival_time, survival_event,
 #'
 #' @description Private function to select Gene with dsga object
 #' @param data_object dsga object information
-#' @param gen_select_type Option. Options on how to select the genes to be
+#' @param gene_select_surv_type Option. Options on how to select the genes to be
 #' used in the mapper. Select the "Abs" option, which means that the
 #' genes with the highest absolute value are chosen, or the
 #' "Top_Bot" option, which means that half of the selected
 #' genes are those with the highest value (positive value, i.e.
 #' worst survival prognosis) and the other half are those with the
 #' lowest value (negative value, i.e. best prognosis). "Top_Bot" default option.
-#' @param percent_gen_select Percentage (from zero to one hundred) of genes
-#' to be selected to be used in mapper. 10 default option.
+#' @param percent_gen_select_for_fun_filt Percentage (from zero to one hundred)
+#' of genes to be selected to be used in the calculation of the values of the
+#' filter function. 1 default option.
+#' @param gene_select_mapper_metric Gene selection criteria for Mapper. Choose as
+#' selection criteria between:
+#' - "mad": those genes in the disease component matrix with the highest mean
+#' absolute deviation will be selected
+#' - "sd": those genes with the highest standard deviation will be selected
+#' - "iqr": those genes with the highest interquartile range will be selected
+#' - "mean_sd": to choose genes with high mean and standard deviation simultaneously
+#' - "sd_surv": these option selects genes for mapper based on the product of standard
+#' deviation of the genes in the disease component matrix plus one times
+#' the Z score obtained by fitting a cox proportional hazard model to the level
+#' of each gene.
+#' @param percent_gen_select_for_mapper Percentage (from zero to one hundred)
+#' of genes to be selected to be used in Mapper. 5 default option.
 #' @param na.rm \code{logical}. If \code{TRUE}, \code{NA} rows are omitted.
 #' If \code{FALSE}, an error occurs in case of \code{NA} rows. TRUE default
 #' option.
@@ -278,15 +350,28 @@ gene_selection_ <- function(full_data, survival_time, survival_event,
 #' \donttest{
 #' dsga_obj <- dsga(full_data, survival_time, survival_event, case_tag, na.rm = "checked")
 #'
-#' gene_selection_object <- gene_selection(dsga_obj, gen_select_type ="top_bot",
-#'                                       percent_gen_select = 10)}
-gene_selection.dsga_object <- function(data_object, gen_select_type, percent_gen_select, na.rm = TRUE){
+#' gene_selection_object <- gene_selection(dsga_obj, gene_select_surv_type ="top_bot",
+#'                                         percent_gen_select_for_fun_filt=1,
+#'                                         gene_select_mapper_metric="mad",
+#'                                         percent_gen_select_for_mapper=5)}
+gene_selection.dsga_object <- function(data_object, gene_select_surv_type,
+                                       percent_gen_select_for_fun_filt,
+                                       gene_select_mapper_metric,
+                                       percent_gen_select_for_mapper,
+                                       na.rm = TRUE){
+
   print(class(data_object))
 
   matrix_disease_component <- data_object[["matrix_disease_component"]]
   #Check and obtain gene selection (we use in the gene_select_surv)
-  num_gen_select <- check_gene_selection(nrow(matrix_disease_component),
-                                         gen_select_type, percent_gen_select)
+
+  return_check_gene_selection <- check_gene_selection(nrow(matrix_disease_component),
+                                                      gene_select_surv_type,
+                                                      percent_gen_select_for_fun_filt,
+                                                      gene_select_mapper_metric,
+                                                      percent_gen_select_for_mapper)
+  num_gen_select_for_fun_filt <- return_check_gene_selection[[1]]
+  num_gen_select_for_mapper <- return_check_gene_selection[[2]]
 
   full_data <- data_object[["full_data"]]
   control_tag <- data_object[["control_tag"]]
@@ -295,9 +380,11 @@ gene_selection.dsga_object <- function(data_object, gen_select_type, percent_gen
   case_tag <- data_object[["case_tag"]]
 
   control_tag_cases <- which(case_tag == control_tag)
-  gene_selection_object <- gene_selection_(full_data, survival_time, survival_event,
-                                         control_tag_cases, gen_select_type, num_gen_select,
-                                         matrix_disease_component)
+  gene_selection_object <- gene_selection_(full_data, survival_time,
+                                           survival_event, control_tag_cases,
+                                           gene_select_surv_type, num_gen_select_for_fun_filt,
+                                           gene_select_mapper_metric, num_gen_select_for_mapper,
+                                           matrix_disease_component)
 
   return(gene_selection_object)
 }
@@ -328,15 +415,29 @@ gene_selection.dsga_object <- function(data_object, gen_select_type, percent_gen
 #' be used to indicate whether the patient's sample is pathological.
 #' The user will then be asked which one indicates whether the patient is
 #' healthy. Only two values are valid in the vector in total.
-#' @param gen_select_type Option. Options on how to select the genes to be
+#' @param gene_select_surv_type Option. Options on how to select the genes to be
 #' used in the mapper. Select the "Abs" option, which means that the
 #' genes with the highest absolute value are chosen, or the
 #' "Top_Bot" option, which means that half of the selected
 #' genes are those with the highest value (positive value, i.e.
 #' worst survival prognosis) and the other half are those with the
 #' lowest value (negative value, i.e. best prognosis). "Top_Bot" default option.
-#' @param percent_gen_select Percentage (from zero to one hundred) of genes
-#' to be selected to be used in mapper. 10 default option.
+#' @param percent_gen_select_for_fun_filt Percentage (from zero to one hundred)
+#' of genes to be selected to be used in the calculation of the values of the
+#' filter function. 1 default option.
+#' @param gene_select_mapper_metric Gene selection criteria for Mapper. Choose as
+#' selection criteria between:
+#' - "mad": those genes in the disease component matrix with the highest mean
+#' absolute deviation will be selected
+#' - "sd": those genes with the highest standard deviation will be selected
+#' - “iqr": those genes with the highest interquartile range will be selected
+#' - "mean_sd": to choose genes with high mean and standard deviation simultaneously
+#' - "sd_surv": these option selects genes for mapper based on the product of standard
+#' deviation of the genes in the disease component matrix plus one times
+#' the Z score obtained by fitting a cox proportional hazard model to the level
+#' of each gene.
+#' @param percent_gen_select_for_mapper Percentage (from zero to one hundred)
+#' of genes to be selected to be used in Mapper. 5 default option.
 #' @param na.rm \code{logical}. If \code{TRUE}, \code{NA} rows are omitted.
 #' If \code{FALSE}, an error occurs in case of \code{NA} rows. TRUE default
 #' option.
@@ -349,9 +450,15 @@ gene_selection.dsga_object <- function(data_object, gen_select_type, percent_gen
 #' data_object <- list("full_data" = full_data, "survival_time" = survival_time,
 #' "survival_event" = survival_event, "case_tag" = case_tag)
 #' class(data_object) <- "data_object"
-#' gene_selection_object <- gene_selection(data_object, gen_select_type ="top_bot",
-#'                                       percent_gen_select = 10)}
-gene_selection.default <- function(data_object, gen_select_type, percent_gen_select, na.rm = TRUE){
+#' gene_selection_obj <- gene_selection(data_object,
+#'                                      gene_select_surv_type ="top_bot",
+#'                                      percent_gen_select_for_fun_filt=1,
+#'                                      gene_select_mapper_metric="mad",
+#'                                      percent_gen_select_for_mapper=5)}
+gene_selection.default <- function(data_object, gene_select_surv_type,
+                                   percent_gen_select_for_fun_filt,
+                                   gene_select_mapper_metric,
+                                   percent_gen_select_for_mapper, na.rm = TRUE){
   full_data <- data_object[["full_data"]]
   survival_event <- data_object[["survival_event"]]
   survival_time <- data_object[["survival_time"]]
@@ -362,7 +469,14 @@ gene_selection.default <- function(data_object, gen_select_type, percent_gen_sel
   full_data <- check_full_data(full_data, na.rm)
   #Select the control_tag. This do it inside of the dsga function
   #Check and obtain gene selection (we use in the gene_select_surv)
-  num_gen_select <- check_gene_selection(nrow(full_data), gen_select_type, percent_gen_select)
+
+  return_check_gene_selection <- check_gene_selection(nrow(full_data),
+                                                      gene_select_surv_type,
+                                                      percent_gen_select_for_fun_filt,
+                                                      gene_select_mapper_metric,
+                                                      percent_gen_select_for_mapper)
+  num_gen_select_for_fun_filt <- return_check_gene_selection[[1]]
+  num_gen_select_for_mapper <- return_check_gene_selection[[2]]
 
   #Select the control_tag
   return_check <- check_vectors(full_data, survival_time, survival_event, case_tag, na.rm)
@@ -374,8 +488,10 @@ gene_selection.default <- function(data_object, gen_select_type, percent_gen_sel
 
   control_tag_cases <- which(case_tag == control_tag)
 
-  gene_selection_object <- gene_selection_(full_data, survival_time, survival_event,
-                                         control_tag_cases, gen_select_type, num_gen_select)
+  gene_selection_object <- gene_selection_(full_data, survival_time,
+                                           survival_event, control_tag_cases,
+                                           gene_select_surv_type, num_gen_select_for_fun_filt,
+                                           gene_select_mapper_metric, num_gen_select_for_mapper)
 
   return(gene_selection_object)
 }

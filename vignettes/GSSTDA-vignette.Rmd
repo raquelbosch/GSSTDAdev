@@ -16,10 +16,10 @@ knitr::opts_chunk$set(
 )
 ```
 
-This vignette represents an introduction to the use of the package G-SS-TDA. 
+This vignette represents an introduction to the use of the package GSSTDA. 
 
 ```{r setup}
-library(GSSTDA)
+library(GSSTDAdev)
 ```
 
 Loading data:
@@ -47,14 +47,15 @@ data("case_tag")
 
 Declare the necessary parameters of the GSSTDA object.
 
-The *gen_select_type* parameter is used to choose the option on how to select 
-the genes to be used in the mapper. Choose between "Abs" and "Top_Bot". The
-*percent_gen_select* parameter is the percentage of genes to be selected to be 
-used in mapper.
+The *gene_select_surv_type* parameter is used to choose the option on how to select the genes to be used in the calculation of the filter function. Choose between "Abs" and "Top_Bot". The *percent_gen_select_for_fun_filt* parameter is the percentage of genes to be selected to be used for this calculation.
+
+The *gene_select_mapper_metric* parameter is used to choose the metric to be used in the selection of the genes for Mapper. The *percent_gen_select_for_mapper* parameter is the percentage of genes to be selected to be used in Mapper. 
 ```{r}
 # Gene selection information
-gen_select_type <- "Top_Bot"
-percent_gen_select <- 10 # Percentage of genes to be selected
+gene_select_surv_type <- "Top_Bot"
+percent_gen_select_for_fun_filt <- 1 # Percentage of genes to be selected for filter funcion 
+gene_select_mapper_metric <- "mad"
+percent_gen_select_for_mapper <- 5 # Percentage of genes to be selected for Mapper
 ```
 
 For the mapper, it is necessary to know the number of intervals into which the 
@@ -103,18 +104,22 @@ that is considered normal or healthy and keeping only the component that is
 due to the disease.  
 
 ```{r}
-dsga_object <- dsga(full_data, survival_time, survival_event, case_tag)
-
+dsga_object <- GSSTDAdev::dsga(full_data, survival_time, survival_event, 
+                               case_tag)
 
 ```
 
 # Second step of the process: Select the genes within the dsga object created in the previous step and calcute the values of the filtering functions.
 
-After performing a survival analysis of each gene, this function selects the genes to be used in the mapper according to both their variability within the database and their relationship with survival. Subsequently, with the genes selected, the values of the filtering functions are calculated for each patient. The filter function allows summarizing each vector of each individual into a single data point. This function takes into account the survival associated with each gene.
+This function selects the genes to be used in the Mapper according to their variability within the database. 
+
+On the other hand, the genes with the strongest association with survival are selected. Using these genes, a filter function value is calculated for each sample, which captures the survival associated with each patient.
 
 ```{r}
-gene_selection_object <- gene_selection(dsga_object, gen_select_type, percent_gen_select)
-
+gene_selection_object <- GSSTDAdev::gene_selection(dsga_object, gene_select_surv_type,
+                                                   percent_gen_select_for_fun_filt,
+                                                   gene_select_mapper_metric,
+                                                   percent_gen_select_for_mapper)
 ```
 
 Another option to execute the second step of the process. Create a object "data_object" with the require information. This could be used when you do not want to apply dsga.
@@ -127,7 +132,10 @@ class(data_object) <- "data_object"
 
 
 #Select gene from data object
-gene_selection_object <- gene_selection(data_object, gen_select_type, percent_gen_select)
+gene_selection_object <- GSSTDAdev::gene_selection(data_object, gene_select_surv_type,
+                                                   percent_gen_select_for_fun_filt,
+                                                   gene_select_mapper_metric,
+                                                   percent_gen_select_for_mapper)
 
 
 ```
@@ -147,14 +155,14 @@ are joined by a vertex.
 This function is independent from the rest and could be used without having done 
 dsga and gene selection
 
-```{r}
-mapper_object <- mapper(data = gene_selection_object[["genes_disease_component"]], 
-                        filter_values = gene_selection_object[["filter_values"]],
-                        num_intervals = num_intervals,
-                        percent_overlap = percent_overlap, distance_type = distance_type,
-                        clustering_type = clustering_type,
-                        linkage_type = linkage_type)
-
+```{r, eval=FALSE}
+mapper_object <- GSSTDAdev::mapper(data = gene_selection_object[["genes_disease_component"]], 
+                                   filter_values = gene_selection_object[["filter_values"]],
+                                   num_intervals = num_intervals,
+                                   percent_overlap = percent_overlap, 
+                                   distance_type = distance_type,
+                                   clustering_type = clustering_type,
+                                   linkage_type = linkage_type)
 
 ```
 
@@ -169,12 +177,12 @@ print(dsga_information)
 ```
 
 Obtain information from the mapper object created in the G-SS-TDA process.
-```{r}
+```{r, eval=FALSE}
 print(mapper_object)
 ```
 
 Plot the mapper graph.
-```{r}
+```{r, eval=FALSE}
 plot_mapper(mapper_object)
 ```
 
@@ -183,36 +191,36 @@ Hovering the mouse over each node in the interactive graph displays the number o
 ### OPTION #2 (all process integrate in the same function):
 
 It creates the GSSTDA object with full data set, internally pre-process using the dsga technique, and the mapper information.
-```{r}
-gsstda_obj <- gsstda(full_data = full_data, survival_time = survival_time, 
-                     survival_event = survival_event, case_tag = case_tag, 
-                     gen_select_type = gen_select_type, 
-                     percent_gen_select = percent_gen_select, 
-                     num_intervals = num_intervals, 
-                     percent_overlap = percent_overlap, 
-                     distance_type = distance_type, 
-                     clustering_type = clustering_type, 
-                     linkage_type = linkage_type)
-
-
+```{r, eval=FALSE}
+gsstda_obj <- GSSTDAdev::gsstda(full_data = full_data, survival_time = survival_time, 
+                                survival_event = survival_event, case_tag = case_tag, 
+                                gene_select_surv_type = gene_select_surv_type,
+                                percent_gen_select_for_fun_filt = percent_gen_select_for_fun_filt,
+                                gene_select_mapper_metric = gene_select_mapper_metric,
+                                percent_gen_select_for_mapper = percent_gen_select_for_mapper,
+                                num_intervals = num_intervals, 
+                                percent_overlap = percent_overlap, 
+                                distance_type = distance_type, 
+                                clustering_type = clustering_type, 
+                                linkage_type = linkage_type)
 
 ```
 
 Obtain information from the dsga block created in the previous step.
 
 This function returns the 100 genes with the highest variability within the dataset and builds a heat map with them.
-```{r}
+```{r, eval=FALSE}
 dsga_information <- results_dsga(gsstda_obj[["matrix_disease_component"]], case_tag)
 print(dsga_information)
 ```
 
 Obtain information from the mapper object created in the G-SS-TDA process.
-```{r}
+```{r, eval=FALSE}
 print(gsstda_obj[["mapper_obj"]])
 ```
 
 Plot the mapper graph.
-```{r}
+```{r, eval=FALSE}
 plot_mapper(gsstda_obj[["mapper_obj"]])
 ```
 

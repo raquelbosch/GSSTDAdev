@@ -60,6 +60,7 @@ clusters.}
 If \code{FALSE}, an error occurs in case of \code{NA} rows.}
 }
 \value{
+list with \code{full_data}, \code{filter_values} and
 \code{optimal_clustering_mode}
 }
 \description{

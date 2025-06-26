@@ -11,8 +11,10 @@ gsstda(
   case_tag,
   control_tag = NA,
   gamma = NA,
-  gen_select_type = "Top_Bot",
-  percent_gen_select = 10,
+  gene_select_surv_type = "Top_Bot",
+  percent_gen_select_for_fun_filt = 1,
+  gene_select_mapper_metric = "mad",
+  percent_gen_select_for_mapper = 5,
   num_intervals = 5,
   percent_overlap = 40,
   distance_type = "correlation",
@@ -58,16 +60,35 @@ the flat data matrix for the generation of the Healthy State Model. If it
 takes the value \code{NA} the magnitude of the noise is assumed to be unknown.
 By default gamma is unknown.}
 
-\item{gen_select_type}{Option. Options on how to select the genes to be
-used in the mapper. Select the "Abs" option, which means that the
-genes with the highest absolute value are chosen, or the
-"Top_Bot" option, which means that half of the selected
+\item{gene_select_surv_type}{Option. Options on how to select the genes to be
+used in the calculation of the values of the filter function (and in the gene
+selection for Mapper if the option "sd_surv" has been chosen) Select the
+"Abs" option, which means that the genes with the highest absolute value are
+chosen, or the "Top_Bot" option, which means that half of the selected
 genes are those with the highest value (positive value, i.e.
 worst survival prognosis) and the other half are those with the
 lowest value (negative value, i.e. best prognosis). "Top_Bot" default option.}
 
-\item{percent_gen_select}{Percentage (from zero to one hundred) of genes
-to be selected to be used in mapper. 10 default option.}
+\item{percent_gen_select_for_fun_filt}{Percentage (from zero to one hundred)
+of genes to be selected to be used in the calculation of the values of the
+filter function. 1 default option.}
+
+\item{gene_select_mapper_metric}{Gene selection criteria for Mapper. Choose as
+selection criteria between:
+\itemize{
+\item "mad": those genes in the disease component matrix with the highest mean
+absolute deviation will be selected
+\item "sd": those genes with the highest standard deviation will be selected
+\item “iqr": those genes with the highest interquartile range will be selected
+\item "mean_sd": to choose genes with high mean and standard deviation simultaneously
+\item "sd_surv": these option selects genes for mapper based on the product of standard
+deviation of the genes in the disease component matrix plus one times
+the Z score obtained by fitting a cox proportional hazard model to the level
+of each gene. "mad" default option.
+}}
+
+\item{percent_gen_select_for_mapper}{Percentage (from zero to one hundred)
+of genes to be selected to be used in Mapper. 5 default option.}
 
 \item{num_intervals}{Parameter for the mapper algorithm. Number of
 intervals used to create the first sample partition based on
@@ -155,17 +176,17 @@ selection and the filter function, and the mapper algorithm. The
 preprocessing is specifically the Disease Specific Genomic Analysis (proposed
 by Nicolau \emph{et al.}) that consists of, through linear models, eliminating the
 part of the data that is considered "healthy" and keeping only the component
-that is due to the disease. The genes are then selected according to their
-variability and whether they are related to survival and the values of the
-filtering function for each patient are calculated taking into account the
-survival associated with each gene. Finally, the mapper algorithm is applied
-from the disease component matrix and the values of the filter function
-obtaining a combinatory graph.
+that is due to the disease. Subsequently, the filter function is calculated,
+whose values capture the survival associated with each patient, in addition
+to selecting those genes that will be used in the Mapper algorithm.
+Finally, the Mapper algorithm is applied from the disease component matrix
+and the values of the filter function obtaining a combinatory graph.
 }
 \examples{
 \donttest{
 gsstda_object <- gsstda(full_data,  survival_time, survival_event, case_tag, gamma=NA,
-                 gen_select_type="Top_Bot", percent_gen_select=10,
+                 gene_select_surv_type="Top_Bot", percent_gen_select_for_fun_filt=1,
+                 gene_select_mapper_metric="mad", percent_gen_select_for_mapper=5,
                  num_intervals = 4, percent_overlap = 50,
                  distance_type = "euclidean", num_bins_when_clustering = 8,
                  clustering_type = "hierarchical", linkage_type = "single")}

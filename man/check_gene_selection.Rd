@@ -4,18 +4,35 @@
 \alias{check_gene_selection}
 \title{check_gene_selection}
 \usage{
-check_gene_selection(num_genes, gen_select_type, percent_gen_select)
+check_gene_selection(
+  num_genes,
+  gene_select_surv_type,
+  percent_gen_select_for_fun_filt,
+  gene_select_mapper_metric,
+  percent_gen_select_for_mapper
+)
 }
 \arguments{
 \item{num_genes}{Number of genes in the full_data}
 
-\item{gen_select_type}{Type of gene selection to be used. Choose between "top_bot" (top-botton)
+\item{gene_select_surv_type}{Type of gene selection to be used. Choose between "top_bot" (top-botton)
 and "abs" (absolute)}
 
-\item{percent_gen_select}{Percentage of genes to be selected}
+\item{percent_gen_select_for_fun_filt}{Percentage (from zero to one hundred)
+of genes to be selected to be used in the calculation of the values of the
+filter function.}
+
+\item{gene_select_mapper_metric}{Gene selection criteria for Mapper. Choose as
+selection criteria between: "mad", "sd", “iqr", "mean_sd" and "sd_surv".}
+
+\item{percent_gen_select_for_mapper}{Percentage (from zero to one hundred)
+of genes to be selected to be used in Mapper.}
 }
 \value{
-num_gen_select Number of genes to be selected according to the percent_gen_select value
+List with number of genes to be selected for filter function
+according to the percent_gen_select_for_fun_filt value
+(\code{num_gen_select_for_fun_filt} and for Mapper according to the
+percent_gen_select_for_mapper value \code{num_gen_select_for_mapper}.
 }
 \description{
 Checking the arguments introduces in the gene selection process.

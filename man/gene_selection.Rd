@@ -4,7 +4,14 @@
 \alias{gene_selection}
 \title{Gene selection and filter function}
 \usage{
-gene_selection(data_object, gen_select_type, percent_gen_select, na.rm = TRUE)
+gene_selection(
+  data_object,
+  gene_select_surv_type = "Top_Bot",
+  percent_gen_select_for_fun_filt = 1,
+  gene_select_mapper_metric = "mad",
+  percent_gen_select_for_mapper = 5,
+  na.rm = TRUE
+)
 }
 \arguments{
 \item{data_object}{Object with:
@@ -33,16 +40,35 @@ The user will then be asked which one indicates whether the patient is
 healthy. Only two values are valid in the vector in total.
 }}
 
-\item{gen_select_type}{Option. Options on how to select the genes to be
-used in the mapper. Select the "Abs" option, which means that the
-genes with the highest absolute value are chosen, or the
-"Top_Bot" option, which means that half of the selected
+\item{gene_select_surv_type}{Option. Options on how to select the genes to be
+used in the calculation of the values of the filter function (and in the gene
+selection for Mapper if the option "sd_surv" has been chosen) Select the
+"Abs" option, which means that the genes with the highest absolute value are
+chosen, or the "Top_Bot" option, which means that half of the selected
 genes are those with the highest value (positive value, i.e.
 worst survival prognosis) and the other half are those with the
 lowest value (negative value, i.e. best prognosis). "Top_Bot" default option.}
 
-\item{percent_gen_select}{Percentage (from zero to one hundred) of genes
-to be selected to be used in mapper. 10 default option.}
+\item{percent_gen_select_for_fun_filt}{Percentage (from zero to one hundred)
+of genes to be selected to be used in the calculation of the values of the
+filter function. 1 default option.}
+
+\item{gene_select_mapper_metric}{Gene selection criteria for Mapper. Choose as
+selection criteria between:
+\itemize{
+\item "mad": those genes in the disease component matrix with the highest mean
+absolute deviation will be selected
+\item "sd": those genes with the highest standard deviation will be selected
+\item “iqr": those genes with the highest interquartile range will be selected
+\item "mean_sd": to choose genes with high mean and standard deviation simultaneously
+\item "sd_surv": these option selects genes for mapper based on the product of standard
+deviation of the genes in the disease component matrix plus one times
+the Z score obtained by fitting a cox proportional hazard model to the level
+of each gene. "mad" default option.
+}}
+
+\item{percent_gen_select_for_mapper}{Percentage (from zero to one hundred)
+of genes to be selected to be used in Mapper. 5 default option.}
 
 \item{na.rm}{\code{logical}. If \code{TRUE}, \code{NA} rows are omitted.
 If \code{FALSE}, an error occurs in case of \code{NA} rows. TRUE default
@@ -82,5 +108,6 @@ data_object <- list("full_data" = full_data, "survival_time" = survival_time,
 "survival_event" = survival_event, "case_tag" = case_tag)
 class(data_object) <- "data_object"
 gene_selection_obj <- gene_selection(data_object,
-gen_select_type ="top_bot", percent_gen_select=10)}
+gene_select_surv_type ="top_bot", percent_gen_select_for_fun_filt=1,
+gene_select_mapper_metric="mad", percent_gen_select_for_mapper=5)}
 }

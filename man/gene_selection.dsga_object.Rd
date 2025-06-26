@@ -4,12 +4,19 @@
 \alias{gene_selection.dsga_object}
 \title{gene_selection_classes.dsga_object}
 \usage{
-\method{gene_selection}{dsga_object}(data_object, gen_select_type, percent_gen_select, na.rm = TRUE)
+\method{gene_selection}{dsga_object}(
+  data_object,
+  gene_select_surv_type,
+  percent_gen_select_for_fun_filt,
+  gene_select_mapper_metric,
+  percent_gen_select_for_mapper,
+  na.rm = TRUE
+)
 }
 \arguments{
 \item{data_object}{dsga object information}
 
-\item{gen_select_type}{Option. Options on how to select the genes to be
+\item{gene_select_surv_type}{Option. Options on how to select the genes to be
 used in the mapper. Select the "Abs" option, which means that the
 genes with the highest absolute value are chosen, or the
 "Top_Bot" option, which means that half of the selected
@@ -17,8 +24,26 @@ genes are those with the highest value (positive value, i.e.
 worst survival prognosis) and the other half are those with the
 lowest value (negative value, i.e. best prognosis). "Top_Bot" default option.}
 
-\item{percent_gen_select}{Percentage (from zero to one hundred) of genes
-to be selected to be used in mapper. 10 default option.}
+\item{percent_gen_select_for_fun_filt}{Percentage (from zero to one hundred)
+of genes to be selected to be used in the calculation of the values of the
+filter function. 1 default option.}
+
+\item{gene_select_mapper_metric}{Gene selection criteria for Mapper. Choose as
+selection criteria between:
+\itemize{
+\item "mad": those genes in the disease component matrix with the highest mean
+absolute deviation will be selected
+\item "sd": those genes with the highest standard deviation will be selected
+\item "iqr": those genes with the highest interquartile range will be selected
+\item "mean_sd": to choose genes with high mean and standard deviation simultaneously
+\item "sd_surv": these option selects genes for mapper based on the product of standard
+deviation of the genes in the disease component matrix plus one times
+the Z score obtained by fitting a cox proportional hazard model to the level
+of each gene.
+}}
+
+\item{percent_gen_select_for_mapper}{Percentage (from zero to one hundred)
+of genes to be selected to be used in Mapper. 5 default option.}
 
 \item{na.rm}{\code{logical}. If \code{TRUE}, \code{NA} rows are omitted.
 If \code{FALSE}, an error occurs in case of \code{NA} rows. TRUE default
@@ -36,6 +61,8 @@ Private function to select Gene with dsga object
 \donttest{
 dsga_obj <- dsga(full_data, survival_time, survival_event, case_tag, na.rm = "checked")
 
-gene_selection_object <- gene_selection(dsga_obj, gen_select_type ="top_bot",
-                                      percent_gen_select = 10)}
+gene_selection_object <- gene_selection(dsga_obj, gene_select_surv_type ="top_bot",
+                                        percent_gen_select_for_fun_filt=1,
+                                        gene_select_mapper_metric="mad",
+                                        percent_gen_select_for_mapper=5)}
 }

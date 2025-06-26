@@ -12,12 +12,11 @@
 #' preprocessing is specifically the Disease Specific Genomic Analysis (proposed
 #' by Nicolau *et al.*) that consists of, through linear models, eliminating the
 #' part of the data that is considered "healthy" and keeping only the component
-#' that is due to the disease. The genes are then selected according to their
-#' variability and whether they are related to survival and the values of the
-#' filtering function for each patient are calculated taking into account the
-#' survival associated with each gene. Finally, the mapper algorithm is applied
-#' from the disease component matrix and the values of the filter function
-#' obtaining a combinatory graph.
+#' that is due to the disease. Subsequently, the filter function is calculated,
+#' whose values capture the survival associated with each patient, in addition
+#' to selecting those genes that will be used in the Mapper algorithm.
+#' Finally, the Mapper algorithm is applied from the disease component matrix
+#' and the values of the filter function obtaining a combinatory graph.
 #' @param full_data Input matrix whose columns correspond to the patients and
 #' rows to the genes.
 #' @param survival_time Numerical vector of the same length as the number of
@@ -45,15 +44,30 @@
 #' the flat data matrix for the generation of the Healthy State Model. If it
 #' takes the value `NA` the magnitude of the noise is assumed to be unknown.
 #' By default gamma is unknown.
-#' @param gen_select_type Option. Options on how to select the genes to be
-#' used in the mapper. Select the "Abs" option, which means that the
-#' genes with the highest absolute value are chosen, or the
-#' "Top_Bot" option, which means that half of the selected
+#' @param gene_select_surv_type Option. Options on how to select the genes to be
+#' used in the calculation of the values of the filter function (and in the gene
+#' selection for Mapper if the option "sd_surv" has been chosen) Select the
+#' "Abs" option, which means that the genes with the highest absolute value are
+#' chosen, or the "Top_Bot" option, which means that half of the selected
 #' genes are those with the highest value (positive value, i.e.
 #' worst survival prognosis) and the other half are those with the
 #' lowest value (negative value, i.e. best prognosis). "Top_Bot" default option.
-#' @param percent_gen_select Percentage (from zero to one hundred) of genes
-#' to be selected to be used in mapper. 10 default option.
+#' @param percent_gen_select_for_fun_filt Percentage (from zero to one hundred)
+#' of genes to be selected to be used in the calculation of the values of the
+#' filter function. 1 default option.
+#' @param gene_select_mapper_metric Gene selection criteria for Mapper. Choose as
+#' selection criteria between:
+#' - "mad": those genes in the disease component matrix with the highest mean
+#' absolute deviation will be selected
+#' - "sd": those genes with the highest standard deviation will be selected
+#' - “iqr": those genes with the highest interquartile range will be selected
+#' - "mean_sd": to choose genes with high mean and standard deviation simultaneously
+#' - "sd_surv": these option selects genes for mapper based on the product of standard
+#' deviation of the genes in the disease component matrix plus one times
+#' the Z score obtained by fitting a cox proportional hazard model to the level
+#' of each gene. "mad" default option.
+#' @param percent_gen_select_for_mapper Percentage (from zero to one hundred)
+#' of genes to be selected to be used in Mapper. 5 default option.
 #' @param num_intervals Parameter for the mapper algorithm. Number of
 #' intervals used to create the first sample partition based on
 #' filtering values. 5 default option.
@@ -118,25 +132,35 @@
 #' @examples
 #' \donttest{
 #' gsstda_object <- gsstda(full_data,  survival_time, survival_event, case_tag, gamma=NA,
-#'                  gen_select_type="Top_Bot", percent_gen_select=10,
+#'                  gene_select_surv_type="Top_Bot", percent_gen_select_for_fun_filt=1,
+#'                  gene_select_mapper_metric="mad", percent_gen_select_for_mapper=5,
 #'                  num_intervals = 4, percent_overlap = 50,
 #'                  distance_type = "euclidean", num_bins_when_clustering = 8,
 #'                  clustering_type = "hierarchical", linkage_type = "single")}
-gsstda <- function(full_data, survival_time, survival_event, case_tag, control_tag = NA, gamma=NA, gen_select_type="Top_Bot",
-                   percent_gen_select=10, num_intervals=5, percent_overlap=40, distance_type="correlation",
-                   clustering_type="hierarchical", num_bins_when_clustering=10, linkage_type="single",
+gsstda <- function(full_data, survival_time, survival_event, case_tag,
+                   control_tag=NA, gamma=NA, gene_select_surv_type="Top_Bot",
+                   percent_gen_select_for_fun_filt=1, gene_select_mapper_metric="mad",
+                   percent_gen_select_for_mapper=5, num_intervals=5, percent_overlap=40,
+                   distance_type="correlation", clustering_type="hierarchical",
+                   num_bins_when_clustering=10, linkage_type="single",
                    optimal_clustering_mode = NA, silhouette_threshold = 0.25, na.rm=TRUE){
   ################################ Prepare data and check data ########################################
   #Check the arguments introduces in the function
   full_data <- check_full_data(full_data, na.rm)
   #Select the control_tag. This do it inside of the dsga function
   #Check and obtain gene selection (we use in the gene_select_surv). It execute in Block II
-  #num_gen_select <- check_gene_selection(nrow(full_data), gen_select_type, percent_gen_select)
+  #return_check_gene_selection <- check_gene_selection(nrow(full_data),
+  #                                                    gene_select_surv_type,
+  #                                                    percent_gen_select_for_fun_filt,
+  #                                                    gene_select_mapper_metric,
+  #                                                    percent_gen_select_for_mapper)
+  #num_gen_select_for_fun_filt <- return_check_gene_selection[[1]]
+  #num_gen_select_for_mapper <- return_check_gene_selection[[2]]
 
   #Don't check filter_values because it is not created.
   filter_values <- c()
   check_return <- check_arg_mapper(full_data, filter_values, distance_type, clustering_type,
-                                              linkage_type, optimal_clustering_mode, silhouette_threshold, na.rm)
+                                   linkage_type, optimal_clustering_mode, silhouette_threshold, na.rm)
 
   full_data <- check_return[[1]]
   filter_values <- check_return[[2]]
@@ -153,9 +177,13 @@ gsstda <- function(full_data, survival_time, survival_event, case_tag, control_t
   case_tag <- dsga_obj[["case_tag"]]
 
   ################### BLOCK II: Gene selection (using "T" control_tag) ##################################
-  gene_selection_object <- gene_selection(dsga_obj, gen_select_type, percent_gen_select)
+  gene_selection_object <- gene_selection(dsga_obj, gene_select_surv_type,
+                                          percent_gen_select_for_fun_filt,
+                                          gene_select_mapper_metric,
+                                          percent_gen_select_for_mapper)
   cox_all_matrix <- gene_selection_object[["cox_all_matrix"]]
-  genes_selected <- gene_selection_object[["genes_selected"]]
+  genes_selected_for_mapper <- gene_selection_object[["genes_selected_for_mapper"]]
+  genes_selected_for_fun_filt <- gene_selection_object[["genes_selected_for_fun_filt"]]
   genes_disease_component <- gene_selection_object[["genes_disease_component"]]
   filter_values <- gene_selection_object[["filter_values"]]
 
@@ -181,7 +209,8 @@ gsstda <- function(full_data, survival_time, survival_event, case_tag, control_t
   gsstda_object <- list("normal_space" = dsga_obj[["normal_space"]],
                         "matrix_disease_component" = matrix_disease_component,
                         "cox_all_matrix" = cox_all_matrix,
-                        "genes_selected" = genes_selected,
+                        "genes_selected_for_mapper" = genes_selected_for_mapper,
+                        "genes_selected_for_fun_filt" = genes_selected_for_fun_filt,
                         "genes_disease_component" = genes_disease_component,
                         "mapper_obj" = mapper_obj
                         )

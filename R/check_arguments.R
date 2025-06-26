@@ -131,24 +131,48 @@ check_filter_values <- function(full_data, filter_values, na.rm = TRUE){
 #' @description Checking the arguments introduces in the gene selection process.
 #'
 #' @param num_genes Number of genes in the full_data
-#' @param gen_select_type Type of gene selection to be used. Choose between "top_bot" (top-botton)
+#' @param gene_select_surv_type Type of gene selection to be used. Choose between "top_bot" (top-botton)
 #' and "abs" (absolute)
-#' @param percent_gen_select Percentage of genes to be selected
-#'
-#' @return num_gen_select Number of genes to be selected according to the percent_gen_select value
-check_gene_selection <- function(num_genes, gen_select_type, percent_gen_select){
+#' @param percent_gen_select_for_fun_filt Percentage (from zero to one hundred)
+#' of genes to be selected to be used in the calculation of the values of the
+#' filter function.
+#' @param gene_select_mapper_metric Gene selection criteria for Mapper. Choose as
+#' selection criteria between: "mad", "sd", “iqr", "mean_sd" and "sd_surv".
+#' @param percent_gen_select_for_mapper Percentage (from zero to one hundred)
+#' of genes to be selected to be used in Mapper.
+#' @return List with number of genes to be selected for filter function
+#' according to the percent_gen_select_for_fun_filt value
+#' (\code{num_gen_select_for_fun_filt} and for Mapper according to the
+#' percent_gen_select_for_mapper value \code{num_gen_select_for_mapper}.
+check_gene_selection <- function(num_genes, gene_select_surv_type,
+                                 percent_gen_select_for_fun_filt,
+                                 gene_select_mapper_metric,
+                                 percent_gen_select_for_mapper){
   #Convert text to lowercase
-  gen_select_type <- tolower(gen_select_type)
-  #Check gen_select_type
+  gene_select_surv_type <- tolower(gene_select_surv_type)
+  #Check gene_select_surv_type
   gen <- c("top_bot","abs")
-  if(!gen_select_type %in% gen){
-    stop(paste("Invalid gene selection type selected. Choose one of the folowing: ", paste(gen, collapse = ", ")))
+  if(!gene_select_surv_type %in% gen){
+    stop(paste("Invalid gene selection type selected. Choose one of the folowing: ",
+               paste(gen, collapse = ", ")))
   }
 
-  #Number of genes to be selected in gene_selection_surv function
-  num_gen_select <- trunc((percent_gen_select/100) * num_genes)
+  #Convert text to lowercase
+  gene_select_mapper_metric <- tolower(gene_select_mapper_metric)
+  #Check gene_select_mapper_metric
+  metrics <- c("mad", "sd","iqr", "mean_sd", "sd_surv")
+  if(!gene_select_mapper_metric %in% metrics){
+    stop(paste("Invalid gene selection metric selected. Choose one of the folowing: ",
+               paste(metrics, collapse = ", ")))
+  }
 
-  return(num_gen_select)
+  #Number of genes to be selected for the filter function
+  num_gen_select_for_fun_filt <- trunc((percent_gen_select_for_fun_filt/100) * num_genes)
+
+  #Number of genes to be selected for Mapper
+  num_gen_select_for_mapper <- trunc((percent_gen_select_for_mapper/100) * num_genes)
+
+  return(list(num_gen_select_for_fun_filt, num_gen_select_for_mapper))
 }
 
 #' @title check_arg_mapper
@@ -191,7 +215,8 @@ check_gene_selection <- function(num_genes, gen_select_type, percent_gen_select)
 #' @param na.rm \code{logical}. If \code{TRUE}, \code{NA} rows are omitted.
 #' If \code{FALSE}, an error occurs in case of \code{NA} rows.
 #'
-#' @return \code{optimal_clustering_mode}
+#' @return list with \code{full_data}, \code{filter_values} and
+#' \code{optimal_clustering_mode}
 check_arg_mapper <- function(full_data, filter_values, distance_type, clustering_type, linkage_type,
                              optimal_clustering_mode = NA, silhouette_threshold = 0.25, na.rm = TRUE){
   #Check distance_type
