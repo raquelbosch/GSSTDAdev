@@ -29,7 +29,7 @@
 #' be used to indicate whether the patient's sample is pathological.
 #' The user will then be asked which one indicates whether the patient is
 #' healthy. Only two values are valid in the vector in total.
-#' @param control_tag Tag of the healthy sample.E.g. "T"
+#' @param control_tag Tag of the healthy sample. E.g. "T"
 #' @param gamma A parameter that indicates the magnitude of the noise assumed in
 #' the flat data matrix for the generation of the Healthy State Model. If it
 #' takes the value `NA` the magnitude of the noise is assumed to be unknown.
@@ -97,12 +97,11 @@ dsga <- function(full_data, survival_time, survival_event, case_tag, control_tag
 #' the database and their relationship with survival. Subsequently, with the
 #' genes selected, the values of the filtering functions are calculated for
 #' each patient. The filter function allows to summarise each vector of each
-#' individual in a single data. This function takes into account the survival
-#' associated with each gene. In particular, the implemented filter function
-#' performs the vector magnitude in the Lp norm (as well as k powers
-#' of this magnitude) of the vector resulting of weighting each element of
-#' the column vector by the Z score obtained in the cox proportional
-#' hazard model.
+#' individual in a single data. Specifically, it computes a multivariate Cox
+#' proportional hazard model using all previously selected genes as predictor
+#' variables. Subsequently, it calculates for each patient using this model
+#' their linear predictor, which corresponds to the exponent of their
+#' proportionality constant.
 #' @param data_object Object with:
 #' - full_data Input matrix whose columns correspond to the patients and
 #' rows to the genes.
@@ -160,9 +159,10 @@ dsga <- function(full_data, survival_time, survival_event, case_tag, control_tag
 #' the standard errors of each coefficient, the Z values (coef/se_coef) and
 #' the p-values for each Z value)
 #' - a vector with the name of the selected genes
-#' - the matrix of disease components with only the rows of the selected genes
-#' (\code{genes_disease_component})
-#' - and the vector of the values of the filter function.
+#' - \code{case_genes_disease_component}: the matrix of disease components with
+#' only the rows of the selected genes and only the columns of the pathological
+#' (case) samples. This matrix is one of the inputs for the \code{mapper} function.
+#' - and the vector of the values of the filter function of pathological samples.
 #' @export
 #' @examples
 #' \donttest{
@@ -237,8 +237,9 @@ gene_selection <- function(data_object, gene_select_surv_type = "Top_Bot",
 #' - a vector with the name of the selected genes for mapper
 #' (\code{genes_selected_mapper}) and for the calculation of the values of the
 #' filter function (\code{genes_selected_fun_filt}).
-#' - the matrix of disease components with only the rows of the selected genes
-#' (\code{genes_disease_component})
+#' - \code{case_genes_disease_component}: the matrix of disease components with
+#' only the rows of the selected genes and only the columns of the pathological
+#' (case) samples. This matrix is one of the inputs for the \code{mapper} function.
 #' - and the vector of the values of the filter function of pathological samples
 #' \code{filter_values}.
 #' @export
@@ -298,13 +299,14 @@ gene_selection_ <- function(full_data, survival_time, survival_event,
 
   # Select genes in matrix_disease_component or full_data (if don't apply Block I)
   # for mapper
-  genes_disease_component <- matrix_disease_component[genes_selected_mapper,]
+  case_genes_disease_component <- matrix_disease_component[genes_selected_mapper,
+                                                           -control_tag_cases]
 
   gene_selection_object <- list("data" = matrix_disease_component,
                                 "cox_all_matrix" = cox_all_matrix,
                                 "genes_selected_for_mapper" = genes_selected_mapper,
                                 "genes_selected_for_fun_filt" = genes_selected_fun_filt,
-                                "genes_disease_component" = genes_disease_component,
+                                "case_genes_disease_component" = case_genes_disease_component,
                                 "filter_values" = filter_values
   )
   class(gene_selection_object) <- "gene_selection_object"
@@ -563,9 +565,10 @@ gene_selection.default <- function(data_object, gene_select_surv_type,
 #' \donttest{
 #' control_tag_cases <- which(case_tag == "NT")
 #' gene_selection_object <- gene_selection_(full_data, survival_time, survival_event,
-#' control_tag_cases, gen_select_type ="top_bot", num_gen_select = 10)
+#' control_tag_cases, gene_select_surv_type ="top_bot", num_gen_select_for_fun_filt = 200,
+#' gene_select_mapper_metric="mad", num_gen_select_for_mapper = 1000)
 #'
-#' mapper_object <- mapper(data = gene_selection_object[["genes_disease_component"]],
+#' mapper_object <- mapper(data = gene_selection_object[["case_genes_disease_component"]],
 #' filter_values = gene_selection_object[["filter_values"]],
 #' num_intervals = 5,
 #' percent_overlap = 40, distance_type = "correlation",

@@ -28,8 +28,7 @@ for each sample in the dataset \code{genes_case_full_data}.
 \description{
 A filtering function for Mapper that projects $$R$^n$ into $R$.
 It calculates for each column of the matrix (each patient), its value
-of the filtering function.
-Specifically, it computes a multivariate Cox proportional hazard model using
+of the filtering function. Specifically, it computes a multivariate Cox proportional hazard model using
 all previously selected genes as predictor variables. Subsequently, it
 calculates for each patient using this model their linear predictor,
 which corresponds to the exponent of their proportionality constant.

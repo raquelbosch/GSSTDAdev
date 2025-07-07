@@ -145,8 +145,10 @@ Mapper condenses the information of high-dimensional datasets into a combinatory
 
 This function is independent from the rest and could be used without having done dsga and gene selection
 
+In the PAD-S, only pathological samples are included in the Mapper graph.
+
 ```{r}
-mapper_object <- mapper(data = gene_selection_object[["genes_disease_component"]], 
+mapper_object <- mapper(data = gene_selection_object[["case_genes_disease_component"]], 
                         filter_values = gene_selection_object[["filter_values"]],
                         num_intervals = num_intervals,
                         percent_overlap = percent_overlap, distance_type = distance_type,

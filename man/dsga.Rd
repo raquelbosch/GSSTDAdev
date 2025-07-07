@@ -41,7 +41,7 @@ be used to indicate whether the patient's sample is pathological.
 The user will then be asked which one indicates whether the patient is
 healthy. Only two values are valid in the vector in total.}
 
-\item{control_tag}{Tag of the healthy sample.E.g. "T"}
+\item{control_tag}{Tag of the healthy sample. E.g. "T"}
 
 \item{gamma}{A parameter that indicates the magnitude of the noise assumed in
 the flat data matrix for the generation of the Healthy State Model. If it

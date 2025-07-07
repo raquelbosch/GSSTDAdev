@@ -85,8 +85,9 @@ the p-values for each Z value)
 \item a vector with the name of the selected genes for mapper
 (\code{genes_selected_mapper}) and for the calculation of the values of the
 filter function (\code{genes_selected_fun_filt}).
-\item the matrix of disease components with only the rows of the selected genes
-(\code{genes_disease_component})
+\item \code{case_genes_disease_component}: the matrix of disease components with
+only the rows of the selected genes and only the columns of the pathological
+(case) samples. This matrix is one of the inputs for the \code{mapper} function.
 \item and the vector of the values of the filter function of pathological samples
 \code{filter_values}.
 }

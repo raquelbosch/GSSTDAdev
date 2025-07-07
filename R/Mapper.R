@@ -100,10 +100,12 @@ one_D_Mapper <- function(mapper_object_ini){
 #' class(data_object) <- "data_object"
 #'
 #' #Select gene from data object
-#' gene_selection_object <- gene_selection(data_object, gen_select_type="top_bot",
-#'  percent_gen_select=10)
+#' gene_selection_object <- gene_selection(data_object, gene_select_surv_type = "Top_Bot",
+#'                                         percent_gen_select_for_fun_filt = 1,
+#'                                         gene_select_mapper_metric = "mad",
+#'                                         percent_gen_select_for_mapper = 5)
 #'
-#' mapper_object <- mapper(data = gene_selection_object[["genes_disease_component"]],
+#' mapper_object <- mapper(data = gene_selection_object[["case_genes_disease_component"]],
 #' filter_values = gene_selection_object[["filter_values"]],
 #' num_intervals = 5,
 #' percent_overlap = 40, distance_type = "correlation",

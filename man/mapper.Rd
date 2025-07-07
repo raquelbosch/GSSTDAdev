@@ -97,9 +97,10 @@ dimension, i.e. using only one filter function value.
 \donttest{
 control_tag_cases <- which(case_tag == "NT")
 gene_selection_object <- gene_selection_(full_data, survival_time, survival_event,
-control_tag_cases, gen_select_type ="top_bot", num_gen_select = 10)
+control_tag_cases, gene_select_surv_type ="top_bot", num_gen_select_for_fun_filt = 200,
+gene_select_mapper_metric="mad", num_gen_select_for_mapper = 1000)
 
-mapper_object <- mapper(data = gene_selection_object[["genes_disease_component"]],
+mapper_object <- mapper(data = gene_selection_object[["case_genes_disease_component"]],
 filter_values = gene_selection_object[["filter_values"]],
 num_intervals = 5,
 percent_overlap = 40, distance_type = "correlation",

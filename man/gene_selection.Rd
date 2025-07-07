@@ -83,9 +83,10 @@ proportional hazard models: with the regression coefficients, the odds ratios,
 the standard errors of each coefficient, the Z values (coef/se_coef) and
 the p-values for each Z value)
 \item a vector with the name of the selected genes
-\item the matrix of disease components with only the rows of the selected genes
-(\code{genes_disease_component})
-\item and the vector of the values of the filter function.
+\item \code{case_genes_disease_component}: the matrix of disease components with
+only the rows of the selected genes and only the columns of the pathological
+(case) samples. This matrix is one of the inputs for the \code{mapper} function.
+\item and the vector of the values of the filter function of pathological samples.
 }
 }
 \description{
@@ -95,12 +96,11 @@ makes a selection of genes according to both their variability within
 the database and their relationship with survival. Subsequently, with the
 genes selected, the values of the filtering functions are calculated for
 each patient. The filter function allows to summarise each vector of each
-individual in a single data. This function takes into account the survival
-associated with each gene. In particular, the implemented filter function
-performs the vector magnitude in the Lp norm (as well as k powers
-of this magnitude) of the vector resulting of weighting each element of
-the column vector by the Z score obtained in the cox proportional
-hazard model.
+individual in a single data. Specifically, it computes a multivariate Cox
+proportional hazard model using all previously selected genes as predictor
+variables. Subsequently, it calculates for each patient using this model
+their linear predictor, which corresponds to the exponent of their
+proportionality constant.
 }
 \examples{
 \donttest{

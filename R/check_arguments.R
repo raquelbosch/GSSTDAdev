@@ -96,7 +96,7 @@ check_vectors <- function(full_data, survival_time, survival_event, case_tag, co
 #'
 #' @param full_data Matrix with the columns of the input matrix
 #' corresponding to the individuals belonging to the level. This matrix could be the
-#' genes_disease_component.
+#' case_genes_disease_component.
 #' @param filter_values Vector obtained after applying the filtering function
 #' to the input matrix, i.e, a vector with the filtering function
 #' values for each included sample.
@@ -112,7 +112,7 @@ check_filter_values <- function(full_data, filter_values, na.rm = TRUE){
 
   #Check if the names of the filter_values are the same as the cols of full_data.
   if(!setequal(names(filter_values), colnames(full_data))){
-    stop("The name of the filter_values must be the same as the patient name of the full_data (or genes_disease_component).")
+    stop("The name of the filter_values must be the same as the patient name of the full_data (or case_genes_disease_component).")
   }
 
   #Omit NAN's values

@@ -15,8 +15,9 @@
 #' that is due to the disease. Subsequently, the filter function is calculated,
 #' whose values capture the survival associated with each patient, in addition
 #' to selecting those genes that will be used in the Mapper algorithm.
-#' Finally, the Mapper algorithm is applied from the disease component matrix
-#' and the values of the filter function obtaining a combinatory graph.
+#' Finally, the Mapper algorithm is applied from the disease component matrix of
+#' pathological samples and the values of the filter function obtaining a
+#' combinatory graph.
 #' @param full_data Input matrix whose columns correspond to the patients and
 #' rows to the genes.
 #' @param survival_time Numerical vector of the same length as the number of
@@ -114,9 +115,11 @@
 #' - the matrix of the disease components normal_space \code{matrix_disease_component},
 #' - a matrix with the results of the application of proportional hazard models
 #' for each gene (\code{cox_all_matrix)},
-#' - the genes selected for mapper \code{genes_disease_componen},
-#' - the matrix of the disease components with information from these genes only
-#' \code{genes_disease_component}
+#' - the selected genes for mapper (\code{genes_selected_mapper}) and for the
+#' calculation of the values of the filter function (\code{genes_selected_fun_filt}),
+#' - \code{case_genes_disease_component} (the matrix of disease components with
+#' only the rows of the selected genes and only the columns of the pathological
+#' samples which is one of the inputs for the \code{mapper} function),
 #' - and a \code{mapper_obj} object. This \code{mapper_obj} object contains the
 #' values of the intervals (interval_data), the samples included in each
 #' interval (sample_in_level), information about the cluster to which the
@@ -184,23 +187,24 @@ gsstda <- function(full_data, survival_time, survival_event, case_tag,
   cox_all_matrix <- gene_selection_object[["cox_all_matrix"]]
   genes_selected_for_mapper <- gene_selection_object[["genes_selected_for_mapper"]]
   genes_selected_for_fun_filt <- gene_selection_object[["genes_selected_for_fun_filt"]]
-  genes_disease_component <- gene_selection_object[["genes_disease_component"]]
+  case_genes_disease_component <- gene_selection_object[["case_genes_disease_component"]]
   filter_values <- gene_selection_object[["filter_values"]]
 
   ################### BLOCK III: Create mapper object where the arguments are checked ###################
   message("\nBLOCK III: The mapper process is started")
 
-  # Transpose genes_disease_component: rows = patient, columns = genes
-  #genes_disease_component <- t(genes_disease_component)
+  # Transpose case_genes_disease_component: rows = patient, columns = genes
+  #case_genes_disease_component <- t(case_genes_disease_component)
 
   #   Check filter_values
-  check_filter <- check_filter_values(genes_disease_component, filter_values)
-  genes_disease_component <- check_filter[[1]]
+  check_filter <- check_filter_values(case_genes_disease_component, filter_values)
+  case_genes_disease_component <- check_filter[[1]]
   filter_values <- check_filter[[2]]
 
-  mapper_obj <- mapper(genes_disease_component, filter_values, num_intervals, percent_overlap, distance_type,
-                       clustering_type, num_bins_when_clustering, linkage_type, optimal_clustering_mode, silhouette_threshold,
-                       na.rm = "checked")
+  mapper_obj <- mapper(case_genes_disease_component, filter_values, num_intervals,
+                       percent_overlap, distance_type, clustering_type,
+                       num_bins_when_clustering, linkage_type, optimal_clustering_mode,
+                       silhouette_threshold, na.rm = "checked")
 
   message("\nBLOCK III: The mapper process is finished")
 
@@ -211,7 +215,7 @@ gsstda <- function(full_data, survival_time, survival_event, case_tag,
                         "cox_all_matrix" = cox_all_matrix,
                         "genes_selected_for_mapper" = genes_selected_for_mapper,
                         "genes_selected_for_fun_filt" = genes_selected_for_fun_filt,
-                        "genes_disease_component" = genes_disease_component,
+                        "case_genes_disease_component" = case_genes_disease_component,
                         "mapper_obj" = mapper_obj
                         )
 

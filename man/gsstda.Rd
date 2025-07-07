@@ -147,9 +147,11 @@ A \code{gsstda} object. It contains:
 \item the matrix of the disease components normal_space \code{matrix_disease_component},
 \item a matrix with the results of the application of proportional hazard models
 for each gene (\code{cox_all_matrix)},
-\item the genes selected for mapper \code{genes_disease_componen},
-\item the matrix of the disease components with information from these genes only
-\code{genes_disease_component}
+\item the selected genes for mapper (\code{genes_selected_mapper}) and for the
+calculation of the values of the filter function (\code{genes_selected_fun_filt}),
+\item \code{case_genes_disease_component} (the matrix of disease components with
+only the rows of the selected genes and only the columns of the pathological
+samples which is one of the inputs for the \code{mapper} function),
 \item and a \code{mapper_obj} object. This \code{mapper_obj} object contains the
 values of the intervals (interval_data), the samples included in each
 interval (sample_in_level), information about the cluster to which the
@@ -179,8 +181,9 @@ part of the data that is considered "healthy" and keeping only the component
 that is due to the disease. Subsequently, the filter function is calculated,
 whose values capture the survival associated with each patient, in addition
 to selecting those genes that will be used in the Mapper algorithm.
-Finally, the Mapper algorithm is applied from the disease component matrix
-and the values of the filter function obtaining a combinatory graph.
+Finally, the Mapper algorithm is applied from the disease component matrix of
+pathological samples and the values of the filter function obtaining a
+combinatory graph.
 }
 \examples{
 \donttest{

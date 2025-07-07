@@ -153,10 +153,12 @@ Subsequently, clusters from different levels that share patients with each other
 are joined by a vertex.
 
 This function is independent from the rest and could be used without having done 
-dsga and gene selection
+dsga and gene selection.
+
+In the PAD-S, only pathological samples are included in the Mapper graph.
 
 ```{r, eval=FALSE}
-mapper_object <- GSSTDAdev::mapper(data = gene_selection_object[["genes_disease_component"]], 
+mapper_object <- GSSTDAdev::mapper(data = gene_selection_object[["case_genes_disease_component"]], 
                                    filter_values = gene_selection_object[["filter_values"]],
                                    num_intervals = num_intervals,
                                    percent_overlap = percent_overlap, 
