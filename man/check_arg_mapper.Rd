@@ -7,11 +7,13 @@
 check_arg_mapper(
   full_data,
   filter_values,
+  type_covering,
   distance_type,
   clustering_type,
   linkage_type,
   optimal_clustering_mode = NA,
   silhouette_threshold = 0.25,
+  dim_reduction,
   na.rm = TRUE
 )
 }
@@ -23,6 +25,9 @@ corresponding to the individuals belonging to the level.}
 to the input matrix, i.e, a vector with the filtering function
 values for each included sample.}
 
+\item{type_covering}{Parameter to choose how to construct the covering.
+Choose between "classical" or "uniform". "uniform" default option.}
+
 \item{distance_type}{Type of distance to be used for clustering.
 Choose between correlation ("correlation") and euclidean ("euclidean"). "correlation"
 default option.}
@@ -33,9 +38,9 @@ default option.}
 
 \item{linkage_type}{Linkage criteria used in hierarchical clustering.
 Choose between "single" for single-linkage clustering, "complete" for
-complete-linkage clustering or "average" for average linkage clustering
-(or UPGMA). Only necessary for hierarchical clustering.
-"single" default option.}
+complete-linkage clustering, "average" for average linkage clustering
+(or UPGMA) or "ward.D" for Ward's method. Only necessary for hierarchical
+clustering. "ward.D" default option.}
 
 \item{optimal_clustering_mode}{Method for selection optimal number of
 clusters. It is only necessary if the chosen type of algorithm is
@@ -55,6 +60,14 @@ cluster. The default value is $0.25$. The threshold of $0.25$ for
 \eqn{\overline{s}}{s-bar} has been chosen based on standard practice, recognizing it
 as a moderate value that reflects adequate separation and cohesion within
 clusters.}
+
+\item{dim_reduction}{Boolean. Parameter indicating whether or not centering,
+scaling and dimensionality reduction of the data is wanted prior to partial
+clustering in Mapper. This process is performed on each subset composed by
+the columns of the individuals that are part of each interval. TRUE indicates
+that centering, scaling and dimensionality reduction will be performed. FALSE
+means that this step will be omitted and clustering will be performed without
+transforming the data.}
 
 \item{na.rm}{\code{logical}. If \code{TRUE}, \code{NA} rows are omitted.
 If \code{FALSE}, an error occurs in case of \code{NA} rows.}

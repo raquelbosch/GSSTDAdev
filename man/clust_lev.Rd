@@ -12,7 +12,7 @@ clust_lev(
   optimal_clustering_mode,
   silhouette_threshold = 0.25,
   num_bins_when_clustering,
-  level_name
+  dim_reduction
 )
 }
 \arguments{
@@ -28,9 +28,10 @@ options.}
 
 \item{linkage_type}{Linkage criteria used in hierarchical clustering.
 Choose between "single" for single-linkage clustering, "complete" for
-complete-linkage clustering or "average" for average linkage clustering
-(or UPGMA). Only necessary for hierarchical clustering. The value provided
-if the type of clustering chosen is hierarchical will be ignored}
+complete-linkage clustering, "average" for average linkage clustering
+(or UPGMA) or "ward.D" for Ward's method. Only necessary for hierarchical
+clustering. "ward.D" default option. The value provided
+if the type of clustering chosen is PAM will be ignored}
 
 \item{optimal_clustering_mode}{Method for selection optimal number of
 clusters. It is only necessary if the chosen type of algorithm is
@@ -56,7 +57,14 @@ employed by the standard optimal number of cluster finder method.
 Parameter not necessary if the "optimal_clust_mode" option is "silhouette"
 or the "clust_type" is "PAM".}
 
-\item{level_name}{Name of the studied level. # ERROR No usado}
+\item{dim_reduction}{Boolean. Parameter indicating whether or not centering,
+scaling and dimensionality reduction of the data is wanted prior to partial
+clustering in Mapper. In dimensionality reduction, principal components that explain at least 80\% of the
+variance are chosen. This process is performed on each subset composed by
+the columns of the individuals that are part of each interval. TRUE indicates
+that centering, scaling and dimensionality reduction will be performed. FALSE
+means that this step will be omitted and clustering will be performed without
+transforming the data.}
 }
 \value{
 Returns a interger vector with the samples included in each cluster

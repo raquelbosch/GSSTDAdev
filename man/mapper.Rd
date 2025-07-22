@@ -7,14 +7,16 @@
 mapper(
   data,
   filter_values,
-  num_intervals = 5,
+  num_intervals = NULL,
   percent_overlap = 40,
+  type_covering = "uniform",
   distance_type = "correlation",
   clustering_type = "hierarchical",
-  num_bins_when_clustering = 10,
-  linkage_type = "single",
+  num_bins_when_clustering = 8,
+  linkage_type = "ward.D",
   optimal_clustering_mode = NA,
   silhouette_threshold = 0.25,
+  dim_reduction = TRUE,
   na.rm = TRUE
 )
 }
@@ -27,10 +29,19 @@ to the input matrix, i.e, a vector with the filtering function
 values for each included sample.}
 
 \item{num_intervals}{Number of intervals used to create the first sample
-partition based on filtering values. 5 default option.}
+partition based on filtering values. By default the root of the number of
+individuals included as input to Mapper.}
 
 \item{percent_overlap}{Percentage of overlap between intervals. Expressed
 as a percentage. 40 default option.}
+
+\item{type_covering}{Parameter to choose how to construct the covering.
+Choose between "classical" or "uniform". If the ‘classic’ option is
+selected, the covering is formed by splitting the range of filter function
+values into overlapping intervals of the same length. If the ‘uniform’ option
+is selected, the covering will be formed with overlapping intervals of the
+filter function values containing approximately the same number of
+individuals. "uniform" default option.}
 
 \item{distance_type}{Type of distance to be used for clustering.
 Choose between correlation ("correlation") and euclidean ("euclidean"). "correlation"
@@ -43,13 +54,13 @@ default option.}
 \item{num_bins_when_clustering}{Number of bins to generate the
 histogram employed by the standard optimal number of cluster finder
 method. Parameter not necessary if the "optimal_clustering_mode" option
-is "silhouette" or the "clustering_type" is "PAM". 10 default option.}
+is "silhouette" or the "clustering_type" is "PAM". 8 default option.}
 
 \item{linkage_type}{Linkage criteria used in hierarchical clustering.
 Choose between "single" for single-linkage clustering, "complete" for
-complete-linkage clustering or "average" for average linkage clustering
-(or UPGMA). Only necessary for hierarchical clustering.
-"single" default option.}
+complete-linkage clustering, "average" for average linkage clustering
+(or UPGMA) or "ward.D" for Ward's method. Only necessary for hierarchical
+clustering. "ward.D" default option.}
 
 \item{optimal_clustering_mode}{Method for selection optimal number of
 clusters. It is only necessary if the chosen type of algorithm is
@@ -70,6 +81,15 @@ cluster. The default value is $0.25$. The threshold of $0.25$ for
 as a moderate value that reflects adequate separation and cohesion within
 clusters.}
 
+\item{dim_reduction}{Boolean. Parameter indicating whether or not centering,
+scaling and dimensionality reduction of the data is wanted prior to partial
+clustering in Mapper. In dimensionality reduction, principal components that explain at least 80\% of the
+variance are chosen. This process is performed on each subset composed by
+the columns of the individuals that are part of each interval. TRUE indicates
+that centering, scaling and dimensionality reduction will be performed. FALSE
+means that this step will be omitted and clustering will be performed without
+transforming the data.}
+
 \item{na.rm}{\code{logical}. If \code{TRUE}, \code{NA} rows are omitted.
 If \code{FALSE}, an error occurs in case of \code{NA} rows. TRUE default
 option.}
@@ -79,7 +99,8 @@ A \code{mapper_obj} object. It contains the values of the intervals
 (interval_data), the samples included in each interval (sample_in_level),
 information about the cluster to which the individuals in each interval
 belong (clustering_all_levels), a list including the individuals contained
-in each detected node (node_samples), their size (node_sizes), the
+in each detected node (node_samples), a list including the nodes contained
+in each interval (nodes_in_lev), their size (node_sizes), the
 average of the filter function values of the individuals of each node
 (node_average_filt) and the adjacency matrix linking the nodes (adj_matrix).
 }
@@ -103,7 +124,7 @@ gene_select_mapper_metric="mad", num_gen_select_for_mapper = 1000)
 mapper_object <- mapper(data = gene_selection_object[["case_genes_disease_component"]],
 filter_values = gene_selection_object[["filter_values"]],
 num_intervals = 5,
-percent_overlap = 40, distance_type = "correlation",
-clustering_type = "hierarchical",
+percent_overlap = 40, type_covering = "uniform",
+distance_type = "correlation", clustering_type = "hierarchical",
 linkage_type = "single")}
 }

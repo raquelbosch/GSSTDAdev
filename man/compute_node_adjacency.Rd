@@ -14,6 +14,8 @@ individuals at each node.}
 \value{
 It returns a matrix of magnitude n nodes x n nodes that stores a
 1 if there are shared samples in two given nodes and a 0 otherwise.
+The matrix is not symmetrical, the information is stored only in the cells
+above the diagonal.
 }
 \description{
 It computes the adjacency matrix between nodes. Two nodes

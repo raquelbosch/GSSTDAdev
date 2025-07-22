@@ -9,6 +9,7 @@ samples_in_levels(interval_data, filter_values)
 \arguments{
 \item{interval_data}{Filter function intervals. List with the set of
 intervals for the filtering function values produced by the
+\code{get_intervals_One_D_uniform_covering} function or the
 \code{get_intervals_One_D} function.}
 
 \item{filter_values}{Vector obtained after applying the filtering

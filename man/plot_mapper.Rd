@@ -39,8 +39,8 @@ gene_selection_object <- gene_selection(data_object, gene_select_surv_type = "To
 
 mapper_object <- mapper(data = gene_selection_object[["case_genes_disease_component"]],
 filter_values = gene_selection_object[["filter_values"]],
-num_intervals = 5,
-percent_overlap = 40, distance_type = "correlation",
+num_intervals = 5,percent_overlap = 40,
+type_covering = "uniform", distance_type = "correlation",
 clustering_type = "hierarchical",
 linkage_type = "single")
 plot_mapper(mapper_object)}

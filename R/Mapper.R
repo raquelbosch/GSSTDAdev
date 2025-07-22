@@ -10,9 +10,10 @@
 #' (interval_data), the samples included in each interval (sample_in_level),
 #' information about the cluster to which the individuals in each interval
 #' belong (clustering_all_levels), a list including the individuals contained
-#' in each detected node (node_samples), their size (node_sizes), the
-#' average of the filter function values of the individuals of each node
-#' (node_average_filt) and the adjacency matrix linking the nodes (adj_matrix).
+#' in each detected node (node_samples), a list including the nodes contained in
+#' each interval (nodes_in_lev), their size (node_sizes), the average of the
+#' filter function values of the individuals of each node (node_average_filt)
+#' and the adjacency matrix linking the nodes (adj_matrix).
 #' Moreover, information is provided on the number of nodes, the average node
 #' size, the standard deviation of the node size, the number of connections
 #' between nodes, the proportion of connections to all possible connections
@@ -23,16 +24,32 @@ one_D_Mapper <- function(mapper_object_ini){
   filter_values <- mapper_object_ini[["filter_values"]]
 
   #Getting intervals.
-  interval_data <- get_intervals_One_D(filter_values, mapper_object_ini[["num_intervals"]], mapper_object_ini[["percent_overlap"]])
+  if (mapper_object_ini[["type_covering"]] == "uniform"){
+    interval_data <- get_intervals_One_D_uniform_covering(filter_values,
+                                                          mapper_object_ini[["num_intervals"]],
+                                                          mapper_object_ini[["percent_overlap"]])
+  } else {
+    interval_data <- get_intervals_One_D(filter_values, mapper_object_ini[["num_intervals"]],
+                                         mapper_object_ini[["percent_overlap"]])
+  }
 
   #Getting samples on each interval.
   samp_in_lev <- samples_in_levels(interval_data, filter_values)
 
   #Clustering all levels.
-  test_clust_all_levels <- clust_all_levels(data, samp_in_lev, mapper_object_ini[["distance_type"]], mapper_object_ini[["clustering_type"]],
-                                            mapper_object_ini[["linkage_type"]], mapper_object_ini[["optimal_clustering_mode"]],  mapper_object_ini[["silhouette_threshold"]],  mapper_object_ini[["num_bins_when_clustering"]])
+  test_clust_all_levels <- clust_all_levels(data, samp_in_lev,
+                                            mapper_object_ini[["distance_type"]],
+                                            mapper_object_ini[["clustering_type"]],
+                                            mapper_object_ini[["linkage_type"]],
+                                            mapper_object_ini[["optimal_clustering_mode"]],
+                                            mapper_object_ini[["silhouette_threshold"]],
+                                            mapper_object_ini[["num_bins_when_clustering"]],
+                                            mapper_object_ini[["dim_reduction"]])
   #Transforming levels into nodes.
   node_samples <- levels_to_nodes(test_clust_all_levels)
+
+  # Getting nodes on each interval.
+  nodes_in_lev <- nodes_in_levels(test_clust_all_levels)
 
   #Computing adjacency matrix.
   adj_matrix_out <- compute_node_adjacency(node_samples)
@@ -64,6 +81,7 @@ one_D_Mapper <- function(mapper_object_ini){
                         "sample_in_level" = samp_in_lev,
                         "clustering_all_levels" = test_clust_all_levels,
                         "node_samples" = node_samples,
+                        "nodes_in_lev" = nodes_in_lev,
                         "node_sizes" = node_sizes,
                         "node_average_filt" = node_average_filt,
                         "adj_matrix" = adj_matrix_out,
@@ -107,26 +125,28 @@ one_D_Mapper <- function(mapper_object_ini){
 #'
 #' mapper_object <- mapper(data = gene_selection_object[["case_genes_disease_component"]],
 #' filter_values = gene_selection_object[["filter_values"]],
-#' num_intervals = 5,
-#' percent_overlap = 40, distance_type = "correlation",
+#' num_intervals = 5,percent_overlap = 40,
+#' type_covering = "uniform", distance_type = "correlation",
 #' clustering_type = "hierarchical",
 #' linkage_type = "single")
 #' plot_mapper(mapper_object)}
-plot_mapper <- function(mapper_object,trans_node_size = TRUE,exp_to_res = 1/2){
-  arr_ind <- base::which(arr.ind = TRUE,mapper_object[["adj_matrix"]] == 1)
-  df_out <- base::data.frame(base::rownames(mapper_object[["adj_matrix"]])[arr_ind[,1]],base::colnames(mapper_object[["adj_matrix"]])[arr_ind[,2]])
+plot_mapper <- function(mapper_object, trans_node_size = TRUE, exp_to_res = 1/2){
+  arr_ind <- base::which(arr.ind = TRUE, mapper_object[["adj_matrix"]] == 1)
+  df_out <- base::data.frame(base::rownames(mapper_object[["adj_matrix"]])[arr_ind[,1]],
+                             base::colnames(mapper_object[["adj_matrix"]])[arr_ind[,2]])
   df_out <- base::cbind(arr_ind,df_out)
   base::rownames(df_out) <- 1:base::nrow(df_out)
   base::colnames(df_out) <- c("from","to","from_name","to_name")
-  nodes_to_net <- base::unique(base::data.frame(c(df_out[,1]-1,df_out[,2]-1),c(df_out[,3],df_out[,4])))
+  nodes_to_net <- base::unique(base::data.frame(c(df_out[,1]-1,df_out[,2]-1),
+                                                c(df_out[,3],df_out[,4])))
   nodes_to_net$node_size <- mapper_object[["node_sizes"]]
   nodes_to_net$ori_size <- mapper_object[["node_sizes"]] #node size with trans_node_size
 
   if(trans_node_size){
     nodes_to_net$node_size <- (nodes_to_net$node_size)^exp_to_res
   }
-  base::colnames(nodes_to_net) <- c("id","label","size", "ori_size")
-  nodes_to_net$color <- map_to_color(base::log2(base::unlist(mapper_object[["node_average_filt"]]) + 2))
+  base::colnames(nodes_to_net) <- c("id", "label", "size", "ori_size")
+  nodes_to_net$color <- map_to_color(base::unlist(mapper_object[["node_average_filt"]]))
   edges_to_net <- df_out[,c(1,2)]-1
   base::colnames(edges_to_net) <- c("from","to")
 
@@ -141,7 +161,7 @@ plot_mapper <- function(mapper_object,trans_node_size = TRUE,exp_to_res = 1/2){
 
   visNetwork::visNetwork(nodes,edges_to_net[!edges_to_net$from == edges_to_net$to,],) %>%
     visNetwork::visNodes(shape = "dot", scaling = list(label = list(enabled = TRUE, min = 10, max = 30))) %>%
-    visNetwork::visEdges(smooth = FALSE) %>%
+    visNetwork::visEdges(smooth = TRUE) %>%
     visNetwork::visLayout(randomSeed = 2) %>%
     visNetwork::visPhysics(solver = "forceAtlas2Based")
 }

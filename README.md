@@ -75,14 +75,15 @@ gene_select_mapper_metric <- "mad"
 percent_gen_select_for_mapper <- 5 # Percentage of genes to be selected for Mapper
 ```
 
-For the mapper, it is necessary to know the number of intervals into which the values of the filter functions will be divided and the overlap between them (\code{percent_overlap}). Default are 5 and 40 respectively. It is also necessary to choose the type of distance to be used for clustering within each interval (choose between correlation ("cor"), default, and euclidean ("euclidean")) and the clustering  type (choose between "hierarchical", default, and "PAM" (“partition around medoids”) options).
+For the mapper, it is necessary to know the number of intervals into which the values of the filter functions will be divided and the overlap between them (\code{percent_overlap}). Default are, the root of the number of individuals included as input to Mapper, and 40, respectively. The set of overlapping intervals, called covering, can be constructed in two ways: the "classic" option and the "uniform" option. We recommend, and it is the fault, the "uniform" option. It is also necessary to choose the type of distance to be used for clustering within each interval (choose between correlation ("cor"), default, and euclidean ("euclidean")) and the clustering  type (choose between "hierarchical", default, and "PAM" (“partition around medoids”) options). 
 
-For hierarchical clustering only, you will be asked by the console to choose the mode in which the number of clusters will be chosen (choose between "silhouette", default, and "standard"). If the mode is "standard" you can indicate the number of bins to generate the histogram (\code{num_bins_when_clustering}, by default 10). If the clustering method is "PAM", the default method will be "silhouette". Also, if the clustering type is hierarchical you can choose the type of linkage criteria (\code{linkage_type} choose between "single", "complete" and "average"). 
+For hierarchical clustering only, you will be asked by the console to choose the mode in which the number of clusters will be chosen (choose between "silhouette", default, and "standard"). If the mode is "standard" you can indicate the number of bins to generate the histogram (\code{num_bins_when_clustering}, by default 8). If the clustering method is "PAM", the default method will be "silhouette". Also, if the clustering type is hierarchical you can choose the type of linkage criteria (\code{linkage_type} choose between "single", "complete", "average" and "ward.D"). 
 
 ```{r}
 #Mapper information
 num_intervals <- 10
 percent_overlap <- 40
+type_covering <- "uniform"
 distance_type <- "correlation"
 clustering_type <- "hierarchical"
 linkage_type <- "single" # only necessary if the type of clustering is hierarchical 
@@ -151,7 +152,9 @@ In the PAD-S, only pathological samples are included in the Mapper graph.
 mapper_object <- mapper(data = gene_selection_object[["case_genes_disease_component"]], 
                         filter_values = gene_selection_object[["filter_values"]],
                         num_intervals = num_intervals,
-                        percent_overlap = percent_overlap, distance_type = distance_type,
+                        percent_overlap = percent_overlap, 
+                        type_covering = type_covering,
+                        distance_type = distance_type,
                         clustering_type = clustering_type,
                         linkage_type = linkage_type, 
                         optimal_clustering_mode = optimal_clustering_mode)
@@ -195,6 +198,7 @@ gsstda_obj <- gsstda(full_data = full_data, survival_time = survival_time,
                      percent_gen_select_for_mapper = percent_gen_select_for_mapper,
                      num_intervals = num_intervals, 
                      percent_overlap = percent_overlap, 
+                     type_covering = type_covering,
                      distance_type = distance_type, 
                      clustering_type = clustering_type, 
                      linkage_type = linkage_type)

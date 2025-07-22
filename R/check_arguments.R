@@ -184,6 +184,8 @@ check_gene_selection <- function(num_genes, gene_select_surv_type,
 #' @param filter_values Vector obtained after applying the filtering function
 #' to the input matrix, i.e, a vector with the filtering function
 #' values for each included sample.
+#' @param type_covering Parameter to choose how to construct the covering.
+#' Choose between "classical" or "uniform". "uniform" default option.
 #' @param distance_type Type of distance to be used for clustering.
 #' Choose between correlation ("correlation") and euclidean ("euclidean"). "correlation"
 #' default option.
@@ -192,9 +194,9 @@ check_gene_selection <- function(num_genes, gene_select_surv_type,
 #' "hierarchical" default option.
 #' @param linkage_type Linkage criteria used in hierarchical clustering.
 #' Choose between "single" for single-linkage clustering, "complete" for
-#' complete-linkage clustering or "average" for average linkage clustering
-#' (or UPGMA). Only necessary for hierarchical clustering.
-#' "single" default option.
+#' complete-linkage clustering, "average" for average linkage clustering
+#' (or UPGMA) or "ward.D" for Ward's method. Only necessary for hierarchical
+#' clustering. "ward.D" default option.
 #' @param optimal_clustering_mode Method for selection optimal number of
 #' clusters. It is only necessary if the chosen type of algorithm is
 #' hierarchical. In this case, choose between "standard" (the method used
@@ -212,13 +214,29 @@ check_gene_selection <- function(num_genes, gene_select_surv_type,
 #' \eqn{\overline{s}}{s-bar} has been chosen based on standard practice, recognizing it
 #' as a moderate value that reflects adequate separation and cohesion within
 #' clusters.
+#' @param dim_reduction Boolean. Parameter indicating whether or not centering,
+#' scaling and dimensionality reduction of the data is wanted prior to partial
+#' clustering in Mapper. This process is performed on each subset composed by
+#' the columns of the individuals that are part of each interval. TRUE indicates
+#' that centering, scaling and dimensionality reduction will be performed. FALSE
+#' means that this step will be omitted and clustering will be performed without
+#' transforming the data.
 #' @param na.rm \code{logical}. If \code{TRUE}, \code{NA} rows are omitted.
 #' If \code{FALSE}, an error occurs in case of \code{NA} rows.
 #'
 #' @return list with \code{full_data}, \code{filter_values} and
 #' \code{optimal_clustering_mode}
-check_arg_mapper <- function(full_data, filter_values, distance_type, clustering_type, linkage_type,
-                             optimal_clustering_mode = NA, silhouette_threshold = 0.25, na.rm = TRUE){
+check_arg_mapper <- function(full_data, filter_values,
+                             type_covering, distance_type, clustering_type,
+                             linkage_type, optimal_clustering_mode = NA,
+                             silhouette_threshold = 0.25, dim_reduction, na.rm = TRUE){
+
+  #Check covering:
+  covering <- c("classical", "uniform")
+  if(!type_covering %in% covering){
+    stop(paste("Invalid type of covering selected. Choose one of the folowing: ", paste(covering, collapse = ", ")))
+  }
+
   #Check distance_type
   distances <- c("correlation","euclidean")
   if(!distance_type %in% distances){
@@ -263,7 +281,7 @@ check_arg_mapper <- function(full_data, filter_values, distance_type, clustering
   }
 
   #Check linkage_type
-  link_types <- c("single","average","complete")
+  link_types <- c("single","average","complete","ward.D")
   if(!linkage_type %in% link_types){
     stop(paste("Invalid linkage method selected. Choose one of the folowing: ", paste(link_types,collapse = ", ")))
   }
@@ -273,6 +291,10 @@ check_arg_mapper <- function(full_data, filter_values, distance_type, clustering
     full_data_and_filter_values <- check_filter_values(full_data, filter_values)
     full_data <- full_data_and_filter_values[[1]]
     filter_values <- full_data_and_filter_values[[2]]
+  }
+
+  if(!dim_reduction %in% c(TRUE, FALSE)){
+    stop("Invalid value of 'dim_reduction' Choose TRUE or FALSE")
   }
 
   return(list(full_data, filter_values, optimal_clustering_mode))
