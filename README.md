@@ -70,9 +70,9 @@ The *gene_select_mapper_metric* parameter is used to choose the metric to be use
 ```{r}
 # Gene selection information
 gene_select_surv_type <- "Top_Bot"
-percent_gen_select_for_fun_filt <- 1 # Percentage of genes to be selected for filter funcion 
+percent_gen_select_for_fun_filt <- 5 # Percentage of genes to be selected for filter funcion 
 gene_select_mapper_metric <- "mad"
-percent_gen_select_for_mapper <- 5 # Percentage of genes to be selected for Mapper
+percent_gen_select_for_mapper <- 10 # Percentage of genes to be selected for Mapper
 ```
 
 For the mapper, it is necessary to know the number of intervals into which the values of the filter functions will be divided and the overlap between them (\code{percent_overlap}). Default are, the root of the number of individuals included as input to Mapper, and 40, respectively. The set of overlapping intervals, called covering, can be constructed in two ways: the "classic" option and the "uniform" option. We recommend, and it is the fault, the "uniform" option. It is also necessary to choose the type of distance to be used for clustering within each interval (choose between correlation ("cor"), default, and euclidean ("euclidean")) and the clustering  type (choose between "hierarchical", default, and "PAM" (“partition around medoids”) options). 
@@ -87,9 +87,11 @@ type_covering <- "uniform"
 distance_type <- "correlation"
 clustering_type <- "hierarchical"
 linkage_type <- "single" # only necessary if the type of clustering is hierarchical 
+optimal_clustering_mode <- "silhouette"
 # num_bins_when_clustering <- 10 # only necessary if the type of clustering is hierarchical 
                                  # and the optimal_clustering_mode is "standard"
                                  # (this is not the case)
+                                 
 ```
 
 
@@ -157,7 +159,8 @@ mapper_object <- mapper(data = gene_selection_object[["case_genes_disease_compon
                         distance_type = distance_type,
                         clustering_type = clustering_type,
                         linkage_type = linkage_type, 
-                        optimal_clustering_mode = optimal_clustering_mode)
+                        optimal_clustering_mode = optimal_clustering_mode, 
+                        dim_reduction = FALSE)
 
 
 ```
@@ -201,7 +204,9 @@ gsstda_obj <- gsstda(full_data = full_data, survival_time = survival_time,
                      type_covering = type_covering,
                      distance_type = distance_type, 
                      clustering_type = clustering_type, 
-                     linkage_type = linkage_type)
+                     linkage_type = linkage_type, 
+                     optimal_clustering_mode = optimal_clustering_mode,
+                     dim_reduction = FALSE)
 
 ```
 
