@@ -4,17 +4,10 @@
 \alias{check_vectors}
 \title{check_vectors}
 \usage{
-check_vectors(
-  full_data,
-  survival_time,
-  survival_event,
-  case_tag,
-  control_tag,
-  na.rm = TRUE
-)
+check_vectors(full_data, survival_time, survival_event, case_tag, control_tag)
 }
 \arguments{
-\item{full_data}{The genes of the full_data (maybe remove by na.rm = TRUE)}
+\item{full_data}{The genes of the full_data}
 
 \item{survival_time}{Time between disease diagnosis and event (if there was
 no event until the end of follow-up).}
@@ -24,13 +17,17 @@ no event until the end of follow-up).}
 \item{case_tag}{The tag of the healthy sample (healthy or not).}
 
 \item{control_tag}{Tag of the healthy sample.E.g. "T"}
-
-\item{na.rm}{\code{logical}. If \code{TRUE}, \code{NA} rows are omitted.
-If \code{FALSE}, an error occurs in case of \code{NA} rows.}
 }
 \value{
-control_tag Return the tag of the healthy sample.
+A list containing the \code{control_tag} (the tag of the healthy
+sample), and the \code{full_data}, \code{survival_event}, \code{survival_time},
+and \code{case_tag} updated (samples with NA's in the case_tag vector deleted).
 }
 \description{
-Checking the \code{survival_time}, \code{survival_event} and \code{case_tag} introduces in the \code{GSSTDA} object.
+Simultaneous checking the \code{survival_time}, \code{survival_event}
+and \code{case_tag} introduced in the \code{GSSTDA} object.
+If there are NAs in the case_tag, the corresponding samples are removed in
+\code{full_data}, \code{survival_time} and \code{survival_event}.
+Function used internally in the funtions \code{gene_selection}, if the
+object is not of class \code{dsga_object},  and \code{gsstda}.
 }

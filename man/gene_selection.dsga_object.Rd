@@ -6,6 +6,8 @@
 \usage{
 \method{gene_selection}{dsga_object}(
   data_object,
+  survival_time,
+  survival_event,
   gene_select_surv_type,
   percent_gen_select_for_fun_filt,
   gene_select_mapper_metric,
@@ -15,6 +17,20 @@
 }
 \arguments{
 \item{data_object}{dsga object information}
+
+\item{survival_time}{Numerical vector of the same length as the number of
+columns of \code{full_data}. In addition, the patients must be in the same
+order as in \code{full_data}. For the patients whose sample is pathological
+should be indicated the time between the disease diagnosis and event
+(death, relapse or other). If the event has not occurred, it should be
+indicated the time until the end of follow-up. Patients whose sample is
+from healthy tissue must have an NA value}
+
+\item{survival_event}{Numerical vector of the same length as the number of
+columns of \code{full_data}. Patients must be in the same order as in
+\code{full_data}. For the the patients with pathological sample should
+be indicated whether the event has occurred (1) or not (0). Only these
+values are valid and healthy patients must have an NA value.}
 
 \item{gene_select_surv_type}{Option. Options on how to select the genes to be
 used in the mapper. Select the "Abs" option, which means that the
@@ -50,18 +66,34 @@ If \code{FALSE}, an error occurs in case of \code{NA} rows. TRUE default
 option.}
 }
 \value{
-A \code{gene_selection} object. It contains: the full_data without NAN's values,
-the control tag of the healthy patient, the matrix with the normal space and
-the matrix of the disease components.
+A \code{gene_selection_object}. It contains:
+\itemize{
+\item the matrix with which the gene selection has been performed without NAN's
+values (\code{data}). It is the \code{matrix_disease_component} in case it has been
+performed from a \code{dsga_object} or \code{full_data} in the opposite case.
+\item the \code{cox_all_matrix} (a matrix with the results of the application of
+proportional hazard models: with the regression coefficients, the odds ratios,
+the standard errors of each coefficient, the Z values (coef/se_coef) and
+the p-values for each Z value)
+\item a vector with the name of the selected genes for mapper
+(\code{genes_selected_mapper}) and for the calculation of the values of the
+filter function (\code{genes_selected_fun_filt}).
+\item \code{case_genes_disease_component}: the matrix of disease components with
+only the rows of the selected genes and only the columns of the pathological
+(case) samples. This matrix is one of the inputs for the \code{mapper} function.
+\item and the vector of the values of the filter function of pathological samples
+\code{filter_values}.
+}
 }
 \description{
 Private function to select Gene with dsga object
 }
 \examples{
 \donttest{
-dsga_obj <- dsga(full_data, survival_time, survival_event, case_tag, na.rm = "checked")
-
-gene_selection_object <- gene_selection(dsga_obj, gene_select_surv_type ="top_bot",
+dsga_obj <- dsga(full_data, case_tag)
+gene_selection_object <- gene_selection(dsga_obj, survival_time,
+                                        survival_event,
+                                        gene_select_surv_type ="top_bot",
                                         percent_gen_select_for_fun_filt=1,
                                         gene_select_mapper_metric="mad",
                                         percent_gen_select_for_mapper=5)}

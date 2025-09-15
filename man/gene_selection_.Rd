@@ -97,8 +97,6 @@ Private function to gene selection
 }
 \examples{
 \donttest{
-gene_select_surv_type <- "Top_Bot"
-percent_gen_select <- 10
 control_tag_cases <- which(case_tag == "NT")
 gene_selection_obj <- gene_selection_(full_data, survival_time, survival_event,
 control_tag_cases, gene_select_surv_type ="top_bot", num_gen_select_for_fun_filt = 200,

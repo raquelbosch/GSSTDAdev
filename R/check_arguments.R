@@ -1,5 +1,4 @@
 #' @title check_full_data
-#'
 #' @description Checking the full_data introduces in the package
 #' @param full_data Matrix with the columns of the input matrix
 #' corresponding to the individuals belonging to the level.
@@ -7,10 +6,6 @@
 #' If \code{FALSE}, an error occurs in case of \code{NA} rows.
 #' @return Return \code{full_data} without NAN's and as a matrix
 check_full_data <- function(full_data, na.rm = TRUE){
-  # If this function has been executed don't do nothing
-  if(na.rm == "checked"){
-    return(full_data)
-  }
 
   #Read the data set
   yes_no <- readline(prompt="Are the columns of the data set the patient and the rows the genes?: yes/no ")
@@ -35,18 +30,23 @@ check_full_data <- function(full_data, na.rm = TRUE){
 
 
 #' @title check_vectors
-#' @description Checking the \code{survival_time}, \code{survival_event} and \code{case_tag} introduces in the \code{GSSTDA} object.
-#'
-#' @param full_data The genes of the full_data (maybe remove by na.rm = TRUE)
+#' @description Simultaneous checking the \code{survival_time}, \code{survival_event}
+#' and \code{case_tag} introduced in the \code{GSSTDA} object.
+#' If there are NAs in the case_tag, the corresponding samples are removed in
+#' \code{full_data}, \code{survival_time} and \code{survival_event}.
+#' Function used internally in the funtions \code{gene_selection}, if the
+#' object is not of class \code{dsga_object},  and \code{gsstda}.
+#' @param full_data The genes of the full_data
 #' @param survival_time Time between disease diagnosis and event (if there was
 #' no event until the end of follow-up).
 #' @param survival_event \code{logical}. Whether or not the event has occurred.
 #' @param case_tag The tag of the healthy sample (healthy or not).
 #' @param control_tag Tag of the healthy sample.E.g. "T"
-#' @param na.rm \code{logical}. If \code{TRUE}, \code{NA} rows are omitted.
-#' If \code{FALSE}, an error occurs in case of \code{NA} rows.
-#' @return control_tag Return the tag of the healthy sample.
-check_vectors <- function(full_data, survival_time, survival_event, case_tag, control_tag, na.rm = TRUE){
+#' @return A list containing the \code{control_tag} (the tag of the healthy
+#' sample), and the \code{full_data}, \code{survival_event}, \code{survival_time},
+#' and \code{case_tag} updated (samples with NA's in the case_tag vector deleted).
+check_vectors <- function(full_data, survival_time, survival_event, case_tag,
+                          control_tag){
   ncol_full_data <- ncol(full_data)
   # Check if the arguments are vectors; a valid type of data; and the vectors are the same dimension as a full_data
   if(!is.vector(survival_time) | !is.numeric(survival_time) | length(survival_time) != ncol_full_data){
@@ -54,7 +54,8 @@ check_vectors <- function(full_data, survival_time, survival_event, case_tag, co
   }
 
   # Omit NAN's values in checking
-  if(!is.vector(survival_event) | !(length(unique(stats::na.omit(survival_event))) == 2 & is.numeric(stats::na.omit(survival_event))) | length(survival_event) != ncol_full_data){
+  if(!is.vector(survival_event) | !all(na.omit(survival_event) %in% c(0, 1))
+     | length(survival_event) != ncol_full_data){
     stop("survival_event must be a valid values vector. Only two type of event (0 or 1). Also, its length must be the same as the number of patients (columns) of the full_data.")
   }
 
@@ -87,7 +88,81 @@ check_vectors <- function(full_data, survival_time, survival_event, case_tag, co
     print(paste("The case tag is '", control_tag_opt[1], "' by default"))
     control_tag <- control_tag_opt[1]
   }
-  return(list(control_tag, full_data, survival_event, survival_time, case_tag))
+  return(list(control_tag, full_data, survival_time, survival_event, case_tag))
+}
+
+#' @title check_case_tag
+#' @description Checking \code{case_tag} introduced in the \code{dsga} object.
+#' Function used internally in the funtion \code{dsga}.
+#' If there are NAs in the case_tag, the corresponding samples are removed in
+#' \code{full_data}.
+#' @param full_data The genes of the full_data
+#' @param case_tag The tag of the healthy sample (healthy or not).
+#' @param control_tag Tag of the healthy sample.E.g. "T"
+#' @return A list containing the \code{control_tag} (the tag of the healthy
+#' sample), and the full_data and case_tag updated (samples with NA's in the
+#' case_tag vector deleted).
+check_case_tag <- function(full_data, case_tag, control_tag){
+  ncol_full_data <- ncol(full_data)
+
+  #If exits NAN's values remove it and check if it contain only two cases and
+  # it has the same dimension (columns) as full_data
+  if(!is.vector(case_tag)){
+    stop("case_tag must be a valid values vector.")
+  }
+
+  if(any(is.na(case_tag))){
+    without_nan_patient <- which(!is.na(case_tag))
+    case_tag <- case_tag[without_nan_patient]
+    full_data <- full_data[,without_nan_patient]
+    ncol_full_data <- ncol(full_data)
+    message("NAN's values in patient was removed in case_tag and full_data. Please, be aware that for later stages, the length and dimensions of these objects have changed.")
+  }
+
+  if(length(unique(case_tag)) != 2){
+    stop("case_tag must has only two type of tags.")
+  }
+  if(length(case_tag) != ncol_full_data){
+    stop("The length of case_tag must be the same as the number of patients (columns) of the full_data.")
+  }
+
+  control_tag_opt <- unique(case_tag)
+  if(is.na(control_tag)){
+    control_tag <- readline(prompt=paste("What is the tag of the healthy patient (value in the case_tag)? (", control_tag_opt[1], " or ", control_tag_opt[2], "): " , sep="") )
+  }
+
+  if(!(control_tag %in% control_tag_opt)){
+    print(paste("The case tag is '", control_tag_opt[1], "' by default"))
+    control_tag <- control_tag_opt[1]
+  }
+  return(list(control_tag, full_data, case_tag))
+}
+
+
+#' @title check_surv_vectors
+#' @description Checking the \code{survival_time} and \code{survival_event}
+#' vectors introduced in the \code{gene_selection object}.
+#' Function used internally in the funtion \code{gene_selection}, if the
+#' object is a \code{dsga_object}.
+#' @param full_data The genes of the full_data
+#' @param survival_time Time between disease diagnosis and event (if there was
+#' no event until the end of follow-up).
+#' @param survival_event \code{logical}. Whether or not the event has occurred.
+#' @return No return, only checking function
+check_surv_vectors <- function(full_data, survival_time, survival_event){
+  ncol_full_data <- ncol(full_data)
+  # Check if the arguments are vectors; a valid type of data; and the vectors are the same dimension as a full_data
+  if(!is.vector(survival_time) | !is.numeric(survival_time) | length(survival_time) != ncol_full_data){
+    stop("survival_time must be a valid values vector and its length must be the same as the number of patients (columns) of the full_data.")
+  }
+
+  # Omit NAN's values in checking
+  if(!is.vector(survival_event) | !all(na.omit(survival_event) %in% c(0, 1))
+     | length(survival_event) != ncol_full_data){
+    stop("survival_event must be a valid values vector. Only two type of event (0 or 1). Also, its length must be the same as the number of patients (columns) of the full_data.")
+  }
+
+  invisible(NULL)
 }
 
 #' @title check_filter_values
@@ -287,7 +362,7 @@ check_arg_mapper <- function(full_data, filter_values,
   }
 
   # Check if filter_values == [] the filter_values is not calculated yet. So, we checked only the others args
-  if(length(filter_values) != 0 & na.rm != "checked"){
+  if(length(filter_values) != 0){
     full_data_and_filter_values <- check_filter_values(full_data, filter_values)
     full_data <- full_data_and_filter_values[[1]]
     filter_values <- full_data_and_filter_values[[2]]

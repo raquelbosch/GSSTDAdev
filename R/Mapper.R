@@ -113,12 +113,13 @@ one_D_Mapper <- function(mapper_object_ini){
 #' @examples
 #' \donttest{
 #' # Create data object
-#' data_object <- list("full_data" = full_data, "survival_time" = survival_time,
-#'                    "survival_event" = survival_event, "case_tag" = case_tag)
+#' data_object <- list("full_data" = full_data, "case_tag" = case_tag)
 #' class(data_object) <- "data_object"
 #'
 #' #Select gene from data object
-#' gene_selection_object <- gene_selection(data_object, gene_select_surv_type = "Top_Bot",
+#' gene_selection_object <- gene_selection(data_object, survival_time,
+#'                                         survival_event,
+#'                                         gene_select_surv_type = "Top_Bot",
 #'                                         percent_gen_select_for_fun_filt = 1,
 #'                                         gene_select_mapper_metric = "mad",
 #'                                         percent_gen_select_for_mapper = 5)

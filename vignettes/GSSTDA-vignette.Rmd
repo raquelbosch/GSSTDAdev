@@ -24,8 +24,7 @@ library(GSSTDAdev)
 
 Loading data:
 
-* The *full data* is the expression matrix whose columns correspond to the patients and
-rows to the genes, 
+* The *full data* is the expression matrix whose columns correspond to the patients androws to the genes, 
 * the *survival_time* is a vector in which, in the case of patients whose sample 
 is pathological, the time between the disease diagnosis and event
 (in this case relapse) is indicated. If the patient has not relapsed, the time 
@@ -37,7 +36,7 @@ this case relapse) has occurred in each patient,
 sample is pathological or healthy tissue.
 
 See *GSSTDA* documentation for further information.
-```{r}
+```{r }
 data("full_data")
 data("survival_time")
 data("survival_event")
@@ -50,7 +49,7 @@ Declare the necessary parameters of the GSSTDA object.
 The *gene_select_surv_type* parameter is used to choose the option on how to select the genes to be used in the calculation of the filter function. Choose between "Abs" and "Top_Bot". The *percent_gen_select_for_fun_filt* parameter is the percentage of genes to be selected to be used for this calculation.
 
 The *gene_select_mapper_metric* parameter is used to choose the metric to be used in the selection of the genes for Mapper. The *percent_gen_select_for_mapper* parameter is the percentage of genes to be selected to be used in Mapper. 
-```{r}
+```{r }
 # Gene selection information
 gene_select_surv_type <- "Top_Bot"
 percent_gen_select_for_fun_filt <- 5 # Percentage of genes to be selected for filter funcion 
@@ -80,7 +79,7 @@ by default 8). If the clustering method is "PAM", the default method will be "si
 Also, if the clustering type is hierarchical you can choose the type of linkage criteria 
 (\code{linkage_type} choose between "single", "complete", "average" and "ward.D"). 
 
-```{r}
+```{r }
 #Mapper information
 num_intervals <- 10
 percent_overlap <- 40
@@ -109,9 +108,8 @@ consists of, through linear models, eliminating the part of the data
 that is considered normal or healthy and keeping only the component that is 
 due to the disease.  
 
-```{r}
-dsga_object <- GSSTDAdev::dsga(full_data, survival_time, survival_event, 
-                               case_tag)
+```{r }
+dsga_object <- GSSTDAdev::dsga(full_data, case_tag)
 
 ```
 
@@ -121,8 +119,10 @@ This function selects the genes to be used in the Mapper according to their vari
 
 On the other hand, the genes with the strongest association with survival are selected. Using these genes, a filter function value is calculated for each sample, which captures the survival associated with each patient.
 
-```{r}
-gene_selection_object <- GSSTDAdev::gene_selection(dsga_object, gene_select_surv_type,
+```{r }
+gene_selection_object <- GSSTDAdev::gene_selection(dsga_object, survival_time,
+                                                   survival_event, 
+                                                   gene_select_surv_type,
                                                    percent_gen_select_for_fun_filt,
                                                    gene_select_mapper_metric,
                                                    percent_gen_select_for_mapper)
@@ -130,19 +130,18 @@ gene_selection_object <- GSSTDAdev::gene_selection(dsga_object, gene_select_surv
 
 Another option to execute the second step of the process. Create a object "data_object" with the require information. This could be used when you do not want to apply dsga.
 
-```{r}
+```{r }
 # Create data object
-data_object <- list("full_data" = full_data, "survival_time" = survival_time,
-                 "survival_event" = survival_event, "case_tag" = case_tag)
+data_object <- list("full_data" = full_data, "case_tag" = case_tag)
 class(data_object) <- "data_object"
 
-
 #Select gene from data object
-gene_selection_object <- GSSTDAdev::gene_selection(data_object, gene_select_surv_type,
+gene_selection_object <- GSSTDAdev::gene_selection(data_object, survival_time,
+                                                   survival_event,
+                                                   gene_select_surv_type,
                                                    percent_gen_select_for_fun_filt,
                                                    gene_select_mapper_metric,
                                                    percent_gen_select_for_mapper)
-
 
 ```
 
@@ -181,7 +180,7 @@ Obtain information from the dsga block created in the previous step.
 
 This function returns the 100 genes with the highest variability within 
 the dataset and builds a heat map with them.
-```{r}
+```{r }
 dsga_information <- results_dsga(dsga_object[["matrix_disease_component"]], case_tag)
 print(dsga_information)
 ```

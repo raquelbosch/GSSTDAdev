@@ -6,6 +6,8 @@
 \usage{
 gene_selection(
   data_object,
+  survival_time,
+  survival_event,
   gene_select_surv_type = "Top_Bot",
   percent_gen_select_for_fun_filt = 1,
   gene_select_mapper_metric = "mad",
@@ -14,22 +16,10 @@ gene_selection(
 )
 }
 \arguments{
-\item{data_object}{Object with:
+\item{data_object}{A dsga_object or an object with:
 \itemize{
 \item full_data Input matrix whose columns correspond to the patients and
 rows to the genes.
-\item survival_time Numerical vector of the same length as the number of columns
-of \code{full_data}. In addition, the patients must be in the same
-order as in \code{full_data}. For the patients whose sample is pathological
-should be indicated the time between the disease diagnosis and event
-(death, relapse or other). If the event has not occurred, it should be
-indicated the time until the end of follow-up. Patients whose sample is
-from healthy tissue must have an NA value
-\item survival_event Numerical vector of the same length as the number of
-columns of \code{full_data}. Patients must be in the same order as in
-\code{full_data}. For the the patients with pathological sample should
-be indicated whether the event has occurred (1) or not (0). Only these
-values are valid and healthy patients must have an NA value.
 \item case_tag Character vector of the same length as the number of
 columns of \code{full_data}. Patients must be in the same order as in
 \code{full_data}. It must be indicated for each patient whether its
@@ -39,6 +29,20 @@ be used to indicate whether the patient's sample is pathological.
 The user will then be asked which one indicates whether the patient is
 healthy. Only two values are valid in the vector in total.
 }}
+
+\item{survival_time}{Numerical vector of the same length as the number of
+columns of \code{full_data}. In addition, the patients must be in the same
+order as in \code{full_data}. For the patients whose sample is pathological
+should be indicated the time between the disease diagnosis and event
+(death, relapse or other). If the event has not occurred, it should be
+indicated the time until the end of follow-up. Patients whose sample is
+from healthy tissue must have an NA value}
+
+\item{survival_event}{Numerical vector of the same length as the number of
+columns of \code{full_data}. Patients must be in the same order as in
+\code{full_data}. For the the patients with pathological sample should
+be indicated whether the event has occurred (1) or not (0). Only these
+values are valid and healthy patients must have an NA value.}
 
 \item{gene_select_surv_type}{Option. Options on how to select the genes to be
 used in the calculation of the values of the filter function (and in the gene
@@ -77,37 +81,44 @@ option.}
 \value{
 A \code{gene_selection_object}. It contains:
 \itemize{
-\item the \code{full_data} without NAN's values (\code{data})
+\item the matrix with which the gene selection has been performed without NAN's
+values (\code{data}). It is the \code{matrix_disease_component} in case it has been
+performed from a \code{dsga_object} or \code{full_data} in the opposite case.
 \item the \code{cox_all_matrix} (a matrix with the results of the application of
 proportional hazard models: with the regression coefficients, the odds ratios,
 the standard errors of each coefficient, the Z values (coef/se_coef) and
 the p-values for each Z value)
-\item a vector with the name of the selected genes
+\item a vector with the name of the selected genes for mapper
+(\code{genes_selected_mapper}) and for the calculation of the values of the
+filter function (\code{genes_selected_fun_filt}).
 \item \code{case_genes_disease_component}: the matrix of disease components with
 only the rows of the selected genes and only the columns of the pathological
 (case) samples. This matrix is one of the inputs for the \code{mapper} function.
-\item and the vector of the values of the filter function of pathological samples.
+\item and the vector of the values of the filter function of pathological samples
+\code{filter_values}.
 }
 }
 \description{
 Gene selection and calculation of filter function values.
 After fitting a Cox proportional hazard model to each gene, this function
-makes a selection of genes according to both their variability within
-the database and their relationship with survival. Subsequently, with the
-genes selected, the values of the filtering functions are calculated for
-each patient. The filter function allows to summarise each vector of each
-individual in a single data. Specifically, it computes a multivariate Cox
-proportional hazard model using all previously selected genes as predictor
-variables. Subsequently, it calculates for each patient using this model
-their linear predictor, which corresponds to the exponent of their
-proportionality constant.
+makes a selection of genes according to their relationship with survival.
+Subsequently, with the genes selected, the values of the filtering functions
+are calculated for each patient. The filter function allows to summarise each
+vector of each individual in a single data. Specifically, it computes a
+multivariate Cox proportional hazard model using all previously selected
+genes as predictor variables. Subsequently, it calculates for each patient
+using this model their linear predictor, which corresponds to the exponent
+of their proportionality constant.
+Finally, this function selects the genes,
+i.e. the columns, from the disease component matrix that will be used as
+input data for the mapper algorithm based on the selected criteria.
 }
 \examples{
 \donttest{
-data_object <- list("full_data" = full_data, "survival_time" = survival_time,
-"survival_event" = survival_event, "case_tag" = case_tag)
+data_object <- list("full_data" = full_data, "case_tag" = case_tag)
 class(data_object) <- "data_object"
-gene_selection_obj <- gene_selection(data_object,
-gene_select_surv_type ="top_bot", percent_gen_select_for_fun_filt=1,
-gene_select_mapper_metric="mad", percent_gen_select_for_mapper=5)}
+gene_selection_obj <- gene_selection(data_object, survival_time,
+survival_event, gene_select_surv_type ="top_bot",
+percent_gen_select_for_fun_filt=1, gene_select_mapper_metric="mad",
+percent_gen_select_for_mapper=5)}
 }

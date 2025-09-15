@@ -9,18 +9,6 @@
 #' the signature of pathologic biology* (doi: 10.1093/bioinformatics/btm033).
 #' @param full_data Input matrix whose columns correspond to the patients and
 #' rows to the genes.
-#' @param survival_time Numerical vector of the same length as the number of
-#' columns of \code{full_data}. In addition, the patients must be in the same
-#' order as in \code{full_data}. For the patients whose sample is pathological
-#' should be indicated the time between the disease diagnosis and event
-#' (death, relapse or other). If the event has not occurred, it should be
-#' indicated the time until the end of follow-up. Patients whose sample is
-#' from healthy tissue must have an NA value
-#' @param survival_event Numerical vector of the same length as the number of
-#' columns of \code{full_data}. Patients must be in the same order as in
-#' \code{full_data}. For the the patients with pathological sample should
-#' be indicated whether the event has occurred (1) or not (0). Only these
-#' values are valid and healthy patients must have an NA value.
 #' @param case_tag Character vector of the same length as the number of
 #' columns of \code{full_data}. Patients must be in the same order as in
 #' \code{full_data}. It must be indicated for each patient whether its
@@ -39,27 +27,27 @@
 #' option.
 #' @return A \code{dsga} object. It contains: the \code{full_data} without
 #' NAN's values, the label designated for healthy samples (\code{control_tag}),
-#' the \code{case_tag} vector without NAN's values, the \code{survival_event},
-#' the the \code{survival_time} the matrix with the normal space (linear space
-#' generated from normal tissue samples) and the matrix of the disease
-#' components (the transformed full_data matrix from which the normal component
-#' has been removed).
+#' the \code{case_tag} vector without NAN's values, the matrix with the normal
+#' space (linear space generated from normal tissue samples) and the matrix of
+#' the disease components (the transformed full_data matrix from which the
+#' normal component has been removed).
 #' @export
 #' @examples
 #' \donttest{
-#' dsga_obj <- dsga(full_data,  survival_time, survival_event, case_tag)}
-dsga <- function(full_data, survival_time, survival_event, case_tag, control_tag = NA, gamma = NA, na.rm = TRUE){
+#' dsga_obj <- dsga(full_data, case_tag)}
+dsga <- function(full_data, case_tag, control_tag = NA, gamma = NA,
+                 na.rm = TRUE){
   ################################ Prepare data and check data ########################################
   #Check the arguments introduces in the function
-  full_data <- check_full_data(full_data, na.rm)
+  if (na.rm != "checked"){
+    full_data <- check_full_data(full_data, na.rm)
 
-  #Select the control_tag
-  return_check <- check_vectors(full_data, survival_time, survival_event, case_tag, control_tag, na.rm)
-  control_tag <- return_check[[1]]
-  full_data <- return_check[[2]]
-  survival_event <- return_check[[3]]
-  survival_time <- return_check[[4]]
-  case_tag <- return_check[[5]]
+    #Select the control_tag
+    return_check <- check_case_tag(full_data, case_tag, control_tag)
+    control_tag <- return_check[[1]]
+    full_data <- return_check[[2]]
+    case_tag <- return_check[[3]]
+    }
 
   ################### BLOCK I: Pre-process. dsga (using "NT" control_tag) ##############################
   message("\nBLOCK I: The pre-process dsga is started")
@@ -79,8 +67,6 @@ dsga <- function(full_data, survival_time, survival_event, case_tag, control_tag
   dsga_object <- list("full_data" = full_data,
                       "control_tag" = control_tag,
                       "case_tag" = case_tag,
-                      "survival_event" = survival_event,
-                      "survival_time" = survival_time,
                       "normal_space" = normal_space,
                       "matrix_disease_component" = matrix_disease_component)
 
@@ -93,30 +79,20 @@ dsga <- function(full_data, survival_time, survival_event, case_tag, control_tag
 #' @title Gene selection and filter function
 #' @description Gene selection and calculation of filter function values.
 #' After fitting a Cox proportional hazard model to each gene, this function
-#' makes a selection of genes according to both their variability within
-#' the database and their relationship with survival. Subsequently, with the
-#' genes selected, the values of the filtering functions are calculated for
-#' each patient. The filter function allows to summarise each vector of each
-#' individual in a single data. Specifically, it computes a multivariate Cox
-#' proportional hazard model using all previously selected genes as predictor
-#' variables. Subsequently, it calculates for each patient using this model
-#' their linear predictor, which corresponds to the exponent of their
-#' proportionality constant.
-#' @param data_object Object with:
+#' makes a selection of genes according to their relationship with survival.
+#' Subsequently, with the genes selected, the values of the filtering functions
+#' are calculated for each patient. The filter function allows to summarise each
+#' vector of each individual in a single data. Specifically, it computes a
+#' multivariate Cox proportional hazard model using all previously selected
+#' genes as predictor variables. Subsequently, it calculates for each patient
+#' using this model their linear predictor, which corresponds to the exponent
+#' of their proportionality constant.
+#' Finally, this function selects the genes,
+#' i.e. the columns, from the disease component matrix that will be used as
+#' input data for the mapper algorithm based on the selected criteria.
+#' @param data_object A dsga_object or an object with:
 #' - full_data Input matrix whose columns correspond to the patients and
 #' rows to the genes.
-#' - survival_time Numerical vector of the same length as the number of columns
-#' of \code{full_data}. In addition, the patients must be in the same
-#' order as in \code{full_data}. For the patients whose sample is pathological
-#' should be indicated the time between the disease diagnosis and event
-#' (death, relapse or other). If the event has not occurred, it should be
-#' indicated the time until the end of follow-up. Patients whose sample is
-#' from healthy tissue must have an NA value
-#' - survival_event Numerical vector of the same length as the number of
-#' columns of \code{full_data}. Patients must be in the same order as in
-#' \code{full_data}. For the the patients with pathological sample should
-#' be indicated whether the event has occurred (1) or not (0). Only these
-#' values are valid and healthy patients must have an NA value.
 #' - case_tag Character vector of the same length as the number of
 #' columns of \code{full_data}. Patients must be in the same order as in
 #' \code{full_data}. It must be indicated for each patient whether its
@@ -125,6 +101,18 @@ dsga <- function(full_data, survival_time, survival_event, case_tag, control_tag
 #' be used to indicate whether the patient's sample is pathological.
 #' The user will then be asked which one indicates whether the patient is
 #' healthy. Only two values are valid in the vector in total.
+#' @param survival_time Numerical vector of the same length as the number of
+#' columns of \code{full_data}. In addition, the patients must be in the same
+#' order as in \code{full_data}. For the patients whose sample is pathological
+#' should be indicated the time between the disease diagnosis and event
+#' (death, relapse or other). If the event has not occurred, it should be
+#' indicated the time until the end of follow-up. Patients whose sample is
+#' from healthy tissue must have an NA value
+#' @param survival_event Numerical vector of the same length as the number of
+#' columns of \code{full_data}. Patients must be in the same order as in
+#' \code{full_data}. For the the patients with pathological sample should
+#' be indicated whether the event has occurred (1) or not (0). Only these
+#' values are valid and healthy patients must have an NA value.
 #' @param gene_select_surv_type Option. Options on how to select the genes to be
 #' used in the calculation of the values of the filter function (and in the gene
 #' selection for Mapper if the option "sd_surv" has been chosen) Select the
@@ -153,26 +141,32 @@ dsga <- function(full_data, survival_time, survival_event, case_tag, control_tag
 #' If \code{FALSE}, an error occurs in case of \code{NA} rows. TRUE default
 #' option.
 #' @return A \code{gene_selection_object}. It contains:
-#' - the \code{full_data} without NAN's values (\code{data})
+#' - the matrix with which the gene selection has been performed without NAN's
+#' values (\code{data}). It is the \code{matrix_disease_component} in case it has been
+#' performed from a \code{dsga_object} or \code{full_data} in the opposite case.
 #' - the \code{cox_all_matrix} (a matrix with the results of the application of
 #' proportional hazard models: with the regression coefficients, the odds ratios,
 #' the standard errors of each coefficient, the Z values (coef/se_coef) and
 #' the p-values for each Z value)
-#' - a vector with the name of the selected genes
+#' - a vector with the name of the selected genes for mapper
+#' (\code{genes_selected_mapper}) and for the calculation of the values of the
+#' filter function (\code{genes_selected_fun_filt}).
 #' - \code{case_genes_disease_component}: the matrix of disease components with
 #' only the rows of the selected genes and only the columns of the pathological
 #' (case) samples. This matrix is one of the inputs for the \code{mapper} function.
-#' - and the vector of the values of the filter function of pathological samples.
+#' - and the vector of the values of the filter function of pathological samples
+#' \code{filter_values}.
 #' @export
 #' @examples
 #' \donttest{
-#' data_object <- list("full_data" = full_data, "survival_time" = survival_time,
-#' "survival_event" = survival_event, "case_tag" = case_tag)
+#' data_object <- list("full_data" = full_data, "case_tag" = case_tag)
 #' class(data_object) <- "data_object"
-#' gene_selection_obj <- gene_selection(data_object,
-#' gene_select_surv_type ="top_bot", percent_gen_select_for_fun_filt=1,
-#' gene_select_mapper_metric="mad", percent_gen_select_for_mapper=5)}
-gene_selection <- function(data_object, gene_select_surv_type = "Top_Bot",
+#' gene_selection_obj <- gene_selection(data_object, survival_time,
+#' survival_event, gene_select_surv_type ="top_bot",
+#' percent_gen_select_for_fun_filt=1, gene_select_mapper_metric="mad",
+#' percent_gen_select_for_mapper=5)}
+gene_selection <- function(data_object, survival_time, survival_event,
+                           gene_select_surv_type = "Top_Bot",
                            percent_gen_select_for_fun_filt = 1,
                            gene_select_mapper_metric = "mad",
                            percent_gen_select_for_mapper = 5,
@@ -245,8 +239,6 @@ gene_selection <- function(data_object, gene_select_surv_type = "Top_Bot",
 #' @export
 #' @examples
 #' \donttest{
-#' gene_select_surv_type <- "Top_Bot"
-#' percent_gen_select <- 10
 #' control_tag_cases <- which(case_tag == "NT")
 #' gene_selection_obj <- gene_selection_(full_data, survival_time, survival_event,
 #' control_tag_cases, gene_select_surv_type ="top_bot", num_gen_select_for_fun_filt = 200,
@@ -315,9 +307,20 @@ gene_selection_ <- function(full_data, survival_time, survival_event,
 }
 
 #' @title gene_selection_classes.dsga_object
-#'
 #' @description Private function to select Gene with dsga object
 #' @param data_object dsga object information
+#' @param survival_time Numerical vector of the same length as the number of
+#' columns of \code{full_data}. In addition, the patients must be in the same
+#' order as in \code{full_data}. For the patients whose sample is pathological
+#' should be indicated the time between the disease diagnosis and event
+#' (death, relapse or other). If the event has not occurred, it should be
+#' indicated the time until the end of follow-up. Patients whose sample is
+#' from healthy tissue must have an NA value
+#' @param survival_event Numerical vector of the same length as the number of
+#' columns of \code{full_data}. Patients must be in the same order as in
+#' \code{full_data}. For the the patients with pathological sample should
+#' be indicated whether the event has occurred (1) or not (0). Only these
+#' values are valid and healthy patients must have an NA value.
 #' @param gene_select_surv_type Option. Options on how to select the genes to be
 #' used in the mapper. Select the "Abs" option, which means that the
 #' genes with the highest absolute value are chosen, or the
@@ -344,29 +347,49 @@ gene_selection_ <- function(full_data, survival_time, survival_event,
 #' @param na.rm \code{logical}. If \code{TRUE}, \code{NA} rows are omitted.
 #' If \code{FALSE}, an error occurs in case of \code{NA} rows. TRUE default
 #' option.
-#' @return A \code{gene_selection} object. It contains: the full_data without NAN's values,
-#' the control tag of the healthy patient, the matrix with the normal space and
-#' the matrix of the disease components.
+#' @return A \code{gene_selection_object}. It contains:
+#' - the matrix with which the gene selection has been performed without NAN's
+#' values (\code{data}). It is the \code{matrix_disease_component} in case it has been
+#' performed from a \code{dsga_object} or \code{full_data} in the opposite case.
+#' - the \code{cox_all_matrix} (a matrix with the results of the application of
+#' proportional hazard models: with the regression coefficients, the odds ratios,
+#' the standard errors of each coefficient, the Z values (coef/se_coef) and
+#' the p-values for each Z value)
+#' - a vector with the name of the selected genes for mapper
+#' (\code{genes_selected_mapper}) and for the calculation of the values of the
+#' filter function (\code{genes_selected_fun_filt}).
+#' - \code{case_genes_disease_component}: the matrix of disease components with
+#' only the rows of the selected genes and only the columns of the pathological
+#' (case) samples. This matrix is one of the inputs for the \code{mapper} function.
+#' - and the vector of the values of the filter function of pathological samples
+#' \code{filter_values}.
 #' @export
 #' @examples
 #' \donttest{
-#' dsga_obj <- dsga(full_data, survival_time, survival_event, case_tag, na.rm = "checked")
-#'
-#' gene_selection_object <- gene_selection(dsga_obj, gene_select_surv_type ="top_bot",
+#' dsga_obj <- dsga(full_data, case_tag)
+#' gene_selection_object <- gene_selection(dsga_obj, survival_time,
+#'                                         survival_event,
+#'                                         gene_select_surv_type ="top_bot",
 #'                                         percent_gen_select_for_fun_filt=1,
 #'                                         gene_select_mapper_metric="mad",
 #'                                         percent_gen_select_for_mapper=5)}
-gene_selection.dsga_object <- function(data_object, gene_select_surv_type,
+gene_selection.dsga_object <- function(data_object, survival_time,
+                                       survival_event, gene_select_surv_type,
                                        percent_gen_select_for_fun_filt,
                                        gene_select_mapper_metric,
                                        percent_gen_select_for_mapper,
                                        na.rm = TRUE){
-
   print(class(data_object))
 
   matrix_disease_component <- data_object[["matrix_disease_component"]]
-  #Check and obtain gene selection (we use in the gene_select_surv)
+  full_data <- data_object[["full_data"]]
 
+  if (na.rm != "checked"){
+    check_surv_vectors(full_data, survival_time, survival_event)
+  }
+
+  # Check and obtain gene selection. This function is not executed within the
+  # gsstda function
   return_check_gene_selection <- check_gene_selection(nrow(matrix_disease_component),
                                                       gene_select_surv_type,
                                                       percent_gen_select_for_fun_filt,
@@ -375,10 +398,7 @@ gene_selection.dsga_object <- function(data_object, gene_select_surv_type,
   num_gen_select_for_fun_filt <- return_check_gene_selection[[1]]
   num_gen_select_for_mapper <- return_check_gene_selection[[2]]
 
-  full_data <- data_object[["full_data"]]
   control_tag <- data_object[["control_tag"]]
-  survival_event <- data_object[["survival_event"]]
-  survival_time <- data_object[["survival_time"]]
   case_tag <- data_object[["case_tag"]]
 
   control_tag_cases <- which(case_tag == control_tag)
@@ -392,23 +412,10 @@ gene_selection.dsga_object <- function(data_object, gene_select_surv_type,
 }
 
 #' @title gene_selection_classes.default
-#'
 #' @description Private function to select Gene without dsga process
 #' @param data_object Object with:
 #' - full_data Input matrix whose columns correspond to the patients and
 #' rows to the genes.
-#' - survival_time Numerical vector of the same length as the number of
-#' columns of \code{full_data}. In addition, the patients must be in the same
-#' order as in \code{full_data}. For the patients whose sample is pathological
-#' should be indicated the time between the disease diagnosis and event
-#' (death, relapse or other). If the event has not occurred, it should be
-#' indicated the time until the end of follow-up. Patients whose sample is
-#' from healthy tissue must have an NA value
-#' - survival_event Numerical vector of the same length as the number of
-#' columns of \code{full_data}. Patients must be in the same order as in
-#' \code{full_data}. For the the patients with pathological sample should
-#' be indicated whether the event has occurred (1) or not (0). Only these
-#' values are valid and healthy patients must have an NA value.
 #' - case_tag Character vector of the same length as the number of
 #' columns of \code{full_data}. Patients must be in the same order as in
 #' \code{full_data}. It must be indicated for each patient whether its
@@ -417,6 +424,18 @@ gene_selection.dsga_object <- function(data_object, gene_select_surv_type,
 #' be used to indicate whether the patient's sample is pathological.
 #' The user will then be asked which one indicates whether the patient is
 #' healthy. Only two values are valid in the vector in total.
+#' @param survival_time Numerical vector of the same length as the number of
+#' columns of \code{full_data}. In addition, the patients must be in the same
+#' order as in \code{full_data}. For the patients whose sample is pathological
+#' should be indicated the time between the disease diagnosis and event
+#' (death, relapse or other). If the event has not occurred, it should be
+#' indicated the time until the end of follow-up. Patients whose sample is
+#' from healthy tissue must have an NA value
+#' @param survival_event Numerical vector of the same length as the number of
+#' columns of \code{full_data}. Patients must be in the same order as in
+#' \code{full_data}. For the the patients with pathological sample should
+#' be indicated whether the event has occurred (1) or not (0). Only these
+#' values are valid and healthy patients must have an NA value.
 #' @param gene_select_surv_type Option. Options on how to select the genes to be
 #' used in the mapper. Select the "Abs" option, which means that the
 #' genes with the highest absolute value are chosen, or the
@@ -443,35 +462,46 @@ gene_selection.dsga_object <- function(data_object, gene_select_surv_type,
 #' @param na.rm \code{logical}. If \code{TRUE}, \code{NA} rows are omitted.
 #' If \code{FALSE}, an error occurs in case of \code{NA} rows. TRUE default
 #' option.
-#' @return A \code{gene_selection} object. It contains: the full_data without NAN's values,
-#' the control tag of the healthy patient, the matrix with the normal space and
-#' the matrix of the disease components.
+#' @return A \code{gene_selection_object}. It contains:
+#' - the matrix with which the gene selection has been performed without NAN's
+#' values (\code{data}). It is the \code{matrix_disease_component} in case it has been
+#' performed from a \code{dsga_object} or \code{full_data} in the opposite case.
+#' - the \code{cox_all_matrix} (a matrix with the results of the application of
+#' proportional hazard models: with the regression coefficients, the odds ratios,
+#' the standard errors of each coefficient, the Z values (coef/se_coef) and
+#' the p-values for each Z value)
+#' - a vector with the name of the selected genes for mapper
+#' (\code{genes_selected_mapper}) and for the calculation of the values of the
+#' filter function (\code{genes_selected_fun_filt}).
+#' - \code{case_genes_disease_component}: the matrix of disease components with
+#' only the rows of the selected genes and only the columns of the pathological
+#' (case) samples. This matrix is one of the inputs for the \code{mapper} function.
+#' - and the vector of the values of the filter function of pathological samples
+#' \code{filter_values}.
 #' @export
 #' @examples
 #' \donttest{
-#' data_object <- list("full_data" = full_data, "survival_time" = survival_time,
-#' "survival_event" = survival_event, "case_tag" = case_tag)
+#' data_object <- list("full_data" = full_data, "case_tag" = case_tag)
 #' class(data_object) <- "data_object"
-#' gene_selection_obj <- gene_selection(data_object,
+#' gene_selection_obj <- gene_selection(data_object, survival_time,
+#'                                      survival_event,
 #'                                      gene_select_surv_type ="top_bot",
 #'                                      percent_gen_select_for_fun_filt=1,
 #'                                      gene_select_mapper_metric="mad",
 #'                                      percent_gen_select_for_mapper=5)}
-gene_selection.default <- function(data_object, gene_select_surv_type,
+gene_selection.default <- function(data_object, survival_time,
+                                   survival_event, gene_select_surv_type,
                                    percent_gen_select_for_fun_filt,
                                    gene_select_mapper_metric,
                                    percent_gen_select_for_mapper, na.rm = TRUE){
   full_data <- data_object[["full_data"]]
-  survival_event <- data_object[["survival_event"]]
-  survival_time <- data_object[["survival_time"]]
   case_tag <- data_object[["case_tag"]]
 
   ################################ Prepare data and check data ########################################
   #Check the arguments introduces in the function
   full_data <- check_full_data(full_data, na.rm)
-  #Select the control_tag. This do it inside of the dsga function
-  #Check and obtain gene selection (we use in the gene_select_surv)
 
+  #Check and obtain gene selection
   return_check_gene_selection <- check_gene_selection(nrow(full_data),
                                                       gene_select_surv_type,
                                                       percent_gen_select_for_fun_filt,
@@ -481,11 +511,13 @@ gene_selection.default <- function(data_object, gene_select_surv_type,
   num_gen_select_for_mapper <- return_check_gene_selection[[2]]
 
   #Select the control_tag
-  return_check <- check_vectors(full_data, survival_time, survival_event, case_tag, na.rm)
+  return_check <- check_vectors(full_data, survival_time, survival_event,
+                                case_tag, control_tag = NA)
+
   control_tag <- return_check[[1]]
   full_data <- return_check[[2]]
-  survival_event <- return_check[[3]]
-  survival_time <- return_check[[4]]
+  survival_time <- return_check[[3]]
+  survival_event <- return_check[[4]]
   case_tag <- return_check[[5]]
 
   control_tag_cases <- which(case_tag == control_tag)

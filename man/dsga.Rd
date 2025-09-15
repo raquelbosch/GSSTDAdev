@@ -4,33 +4,11 @@
 \alias{dsga}
 \title{Disease-Specific Genomic Analysis}
 \usage{
-dsga(
-  full_data,
-  survival_time,
-  survival_event,
-  case_tag,
-  control_tag = NA,
-  gamma = NA,
-  na.rm = TRUE
-)
+dsga(full_data, case_tag, control_tag = NA, gamma = NA, na.rm = TRUE)
 }
 \arguments{
 \item{full_data}{Input matrix whose columns correspond to the patients and
 rows to the genes.}
-
-\item{survival_time}{Numerical vector of the same length as the number of
-columns of \code{full_data}. In addition, the patients must be in the same
-order as in \code{full_data}. For the patients whose sample is pathological
-should be indicated the time between the disease diagnosis and event
-(death, relapse or other). If the event has not occurred, it should be
-indicated the time until the end of follow-up. Patients whose sample is
-from healthy tissue must have an NA value}
-
-\item{survival_event}{Numerical vector of the same length as the number of
-columns of \code{full_data}. Patients must be in the same order as in
-\code{full_data}. For the the patients with pathological sample should
-be indicated whether the event has occurred (1) or not (0). Only these
-values are valid and healthy patients must have an NA value.}
 
 \item{case_tag}{Character vector of the same length as the number of
 columns of \code{full_data}. Patients must be in the same order as in
@@ -55,11 +33,10 @@ option.}
 \value{
 A \code{dsga} object. It contains: the \code{full_data} without
 NAN's values, the label designated for healthy samples (\code{control_tag}),
-the \code{case_tag} vector without NAN's values, the \code{survival_event},
-the the \code{survival_time} the matrix with the normal space (linear space
-generated from normal tissue samples) and the matrix of the disease
-components (the transformed full_data matrix from which the normal component
-has been removed).
+the \code{case_tag} vector without NAN's values, the matrix with the normal
+space (linear space generated from normal tissue samples) and the matrix of
+the disease components (the transformed full_data matrix from which the
+normal component has been removed).
 }
 \description{
 Disease-Specific Genomic Analysis (dsga).
@@ -73,5 +50,5 @@ the signature of pathologic biology} (doi: 10.1093/bioinformatics/btm033).
 }
 \examples{
 \donttest{
-dsga_obj <- dsga(full_data,  survival_time, survival_event, case_tag)}
+dsga_obj <- dsga(full_data, case_tag)}
 }

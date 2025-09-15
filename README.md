@@ -1,6 +1,6 @@
 # GSSTDA: Gene Structure Survival using Topological Data Analysis
 ## Installation
-You can install the released version of eat from [CRAN](https://CRAN.R-project.org) with:
+You can install the released version of GSSTDA from [CRAN](https://CRAN.R-project.org) with:
 
 ``` r
 install.packages("GSSTDA")
@@ -105,7 +105,7 @@ The package allows the various steps required for GSSTDA to be performed separat
 This analysis, developed by Nicolau *et al.* is independent of the rest of the process and can be used with the data for further analysis other than mapper. It allows the calculation of the "disease component" which consists of, through linear models, eliminating the part of the data that is considered normal or healthy and keeping only the component that is due to the disease.  
 
 ```{r}
-dsga_object <- dsga(full_data, survival_time, survival_event, case_tag)
+dsga_object <- dsga(full_data, case_tag)
 
 
 ```
@@ -117,7 +117,8 @@ This function selects the genes to be used in the Mapper according to their vari
 On the other hand, the genes with the strongest association with survival are selected. Using these genes, a filter function value is calculated for each sample, which captures the survival associated with each patient.
 
 ```{r}
-gene_selection_object <- gene_selection(dsga_object, gene_select_surv_type,
+gene_selection_object <- gene_selection(dsga_object, survival_time, survival_event,
+                                        gene_select_surv_type,
                                         percent_gen_select_for_fun_filt,
                                         gene_select_mapper_metric,
                                         percent_gen_select_for_mapper)
@@ -127,17 +128,15 @@ Another option to execute the second step of the process. Create a object "data_
 
 ```{r}
 # Create data object
-data_object <- list("full_data" = full_data, "survival_time" = survival_time,
-                 "survival_event" = survival_event, "case_tag" = case_tag)
+data_object <- list("full_data" = full_data, "case_tag" = case_tag)
 class(data_object) <- "data_object"
 
-
 #Select gene from data object
-gene_selection_object <- gene_selection(data_object, gene_select_surv_type,
+gene_selection_object <- gene_selection(data_object, survival_time, 
+                                        survival_event, gene_select_surv_type,
                                         percent_gen_select_for_fun_filt,
                                         gene_select_mapper_metric,
                                         percent_gen_select_for_mapper)
-
 
 ```
 

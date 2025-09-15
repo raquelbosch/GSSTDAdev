@@ -83,12 +83,12 @@ clusters.}
 
 \item{dim_reduction}{Boolean. Parameter indicating whether or not centering,
 scaling and dimensionality reduction of the data is wanted prior to partial
-clustering in Mapper. In dimensionality reduction, principal components that explain at least 80\% of the
-variance are chosen. This process is performed on each subset composed by
-the columns of the individuals that are part of each interval. TRUE indicates
-that centering, scaling and dimensionality reduction will be performed. FALSE
-means that this step will be omitted and clustering will be performed without
-transforming the data.}
+clustering in Mapper. In dimensionality reduction, principal components that
+explain at least 80\% of the variance are chosen. This process is performed
+on each subset composed by the columns of the individuals that are part of
+each interval. TRUE indicates that centering, scaling and dimensionality
+reduction will be performed. FALSE means that this step will be omitted and
+clustering will be performed without transforming the data.}
 
 \item{na.rm}{\code{logical}. If \code{TRUE}, \code{NA} rows are omitted.
 If \code{FALSE}, an error occurs in case of \code{NA} rows. TRUE default
