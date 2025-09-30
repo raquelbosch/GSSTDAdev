@@ -120,7 +120,7 @@ generate_disease_component <- function(full_data, normal_space){
 #' tumourous. The user will then be asked which one indicates whether
 #' the patient is healthy. Only two values are valid in the vector in total.
 #' @import ComplexHeatmap
-#' @import circlize
+#' @importFrom circlize colorRamp2
 #' @export
 #' @return The heatmap of the dsga result.
 plot_dsga <- function(selected_matrix_disease_component, case_tag){

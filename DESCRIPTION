@@ -50,7 +50,10 @@ Imports:
 	ComplexHeatmap,
 	circlize,
 	devtools, 
-        matrixStats
+        matrixStats,
+	igraph, 
+	RColorBrewer,
+	graphics
 Suggests: 
     rmarkdown,
     knitr,

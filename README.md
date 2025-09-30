@@ -229,3 +229,36 @@ Plot the mapper graph.
 plot_mapper(gsstda_obj[["mapper_obj"]])
 ```
 <img src="man/figures/plot_mapper_object.png" width="100%" />
+
+
+### Options for representing the Mapper graph
+
+#### Colouring nodes by the average value of a variable of interest.
+
+The Mapper graph may be displayed colored by the average filter function values, or alternatively by another numerical variable of interest if one is supplied. For example, as in this case, by the average value of the "disease component" of a gene. Only pathological samples are included (\code{case_genes_disease_component}):
+
+```{r }
+variable_by_color <- gsstda_obj[["case_genes_disease_component"]]["ANLN",]
+```
+We recommend that you specify the name of the argument when calling the function.
+
+```{r }
+plot_mapper(gsstda_obj[["mapper_obj"]], variable_by_color = variable_by_color)
+```
+
+#### Representing the nodes with a pie chart showing the proportion of categories for a variable of interest.
+
+This function reproduces the graph of a Mapper object in which each node is represented by a pie chart showing the proportion of each category of a variable of interest in each node.
+For example, in this case, the mortality percentage for each node is represented.
+The variable vector must have the name of the samples. 
+
+```{r }
+names(survival_event) <- colnames(full_data)
+var_of_interest <- survival_event[case_tag == "T"]
+```
+
+```{r }
+plot_mapper_with_pie_chart(gsstda_obj[["mapper_obj"]], var_of_interest,
+                           name_var_of_interest = "Mortality percentage")
+```
+

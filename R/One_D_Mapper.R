@@ -403,22 +403,3 @@ compute_node_adjacency <- function(nodes_list){
 }
 
 
-#' @title Map to color
-#' @description
-#' Auxiliary function that maps a numeric vector, the average node
-#' filtering function values, to a color vector.
-#' @param x A vector of numeric values storing the average filtering
-#' function values found in the samples placed into a specific node.
-#' @param limits A two element numeric vector including the range of values.
-#' This is optional.
-#' @return A vector of the same length of x with colors ranging from blue to
-#' red.
-#' @import grDevices
-map_to_color <- function(x,limits=NULL){
-  pallette_ob <-  grDevices::colorRampPalette(colors = c("blue","red"))(100)
-  if(is.null(limits)){
-    limits=range(x)}
-  map_to_col <- pallette_ob[base::findInterval(x,base::seq(limits[1],limits[2],length.out=length(pallette_ob)+1), all.inside=TRUE)]
-  return(map_to_col)
-}
-

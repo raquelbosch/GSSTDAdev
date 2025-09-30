@@ -346,7 +346,6 @@ check_arg_mapper <- function(full_data, filter_values,
   }
   message("The optimal clustering mode is '", optimal_clustering_mode, " '")
 
-
   # Check
   if (optimal_clustering_mode == "silhouette"){
     if(silhouette_threshold != 0.25){
@@ -373,4 +372,33 @@ check_arg_mapper <- function(full_data, filter_values,
   }
 
   return(list(full_data, filter_values, optimal_clustering_mode))
+}
+
+#' @title check_plot_vectors
+#' @description Check the vectors for the functions plot_mapper and plot_mapper_with_pie_chart.
+#' @param mapper_object A \code{mapper_obj} object.
+#' @param vector Vector containing the variable to be used for representation.
+#' It must contain a single value per sample.
+#' @param class_vector "numeric" or "character". Variable indicating the type
+#' of vector depending on if it is to be used in \code{plot_mapper} or in
+#' \code{plot_mapper_with_pie_chart}. "character" by default.
+#' @return No return, only checking function
+check_plot_vectors <- function(mapper_object, vector,
+                               class_vector = "character") {
+  if (!is.vector(vector)){
+    stop("colour_by_variable or plot_mapper_with_pie_chart must be a vector")
+  }
+  if (any(duplicated(names(vector)))) {
+    stop("Names of colour_by_variable or var_of_interest must be unique")
+  }
+  if (!all(unlist(mapper_object$sample_in_level) %in% names(vector))) {
+    stop("The colour_by_variable or var_of_interest vectors must have names. Furthermore, they must match the names of mapper_object. All names of mapper_object must be in colour_by_variable or var_of_interest vectors.")
+  }
+
+  if (class_vector == "numeric") {
+    if(any(is.na(vector))) {
+      stop("colour_by_variable cannot contain NAs")
+    }
+  }
+  invisible(NULL)
 }
