@@ -246,6 +246,8 @@ We recommend that you specify the name of the argument when calling the function
 plot_mapper(gsstda_obj[["mapper_obj"]], variable_by_color = variable_by_color)
 ```
 
+<img src="man/figures/plot_mapper_object_colored_by_gene.png" width="100%" />
+
 #### Representing the nodes with a pie chart showing the proportion of categories for a variable of interest.
 
 This function reproduces the graph of a Mapper object in which each node is represented by a pie chart showing the proportion of each category of a variable of interest in each node.
@@ -262,3 +264,4 @@ plot_mapper_with_pie_chart(gsstda_obj[["mapper_obj"]], var_of_interest,
                            name_var_of_interest = "Mortality percentage")
 ```
 
+<img src="man/figures/plot_mapper_object_pie_chart.png" width="100%" />

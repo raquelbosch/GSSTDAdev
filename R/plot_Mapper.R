@@ -257,6 +257,7 @@ plot_mapper_with_pie_chart <- function(mapper_object, var_of_interest,
                    title = name_var_of_interest,
                    border = "black",
                    bty = "n",
+                   title.cex = 0.7,
                    cex = 0.5)
 }
 
