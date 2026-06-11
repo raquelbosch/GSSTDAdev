@@ -16,7 +16,8 @@
 flatten_normal_tiss <- function(normal_tiss){
   matrix_flatten_normal_tiss <- normal_tiss
   for(i in 1:ncol(normal_tiss)){
-    matrix_flatten_normal_tiss[,i] <- stats::fitted(stats::lm(normal_tiss[,i] ~ 0 + ., data = data.frame(normal_tiss)[,-i]))
+    matrix_flatten_normal_tiss[,i] <- stats::fitted(stats::lm(normal_tiss[,i] ~ 0 + .,
+                                                              data = data.frame(normal_tiss)[,-i]))
   }
   return(matrix_flatten_normal_tiss)
 }
@@ -161,8 +162,8 @@ plot_dsga <- function(selected_matrix_disease_component, case_tag){
 #' @return A heatmap of the 100 genes with the highest variability in the matrix
 #' disease component.
 results_dsga <- function(matrix_disease_component, case_tag){
-  genes_sd <- apply(matrix_disease_component,1,stats::sd)
-  selected_genes_sd <- names(genes_sd[order(genes_sd,decreasing = T)])[1:100]
+  genes_sd <- apply(matrix_disease_component,1, stats::sd)
+  selected_genes_sd <- names(genes_sd[order(genes_sd, decreasing = T)])[1:100]
   selected_matrix_disease_component_sd <- matrix_disease_component[selected_genes_sd,]
 
   # DT::datatable(selected_matrix_disease_component_sd)

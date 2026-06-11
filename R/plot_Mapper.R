@@ -231,9 +231,7 @@ plot_mapper_with_pie_chart <- function(mapper_object, var_of_interest,
 
   adj_matrix <- mapper_object$adj_matrix
   # Remove diagonal from '1s'
-  for (i in 1:dim(adj_matrix)[1]){
-    adj_matrix[i,i] <- 0
-  }
+  diag(adj_matrix) <- 0
 
   g <- igraph::graph_from_adjacency_matrix(adj_matrix, mode = "undirected")
   colors <- list(RColorBrewer::brewer.pal(length(unique(var_of_interest)),

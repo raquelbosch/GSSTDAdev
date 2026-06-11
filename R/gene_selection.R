@@ -15,6 +15,7 @@
 #' @return Character vector with the names of the selected genes.
 #' @import matrixStats
 #' @import stats
+#' @export
 gene_selection_mapper_by_variability <- function(case_disease_component,
                                                  num_gen_select,
                                                  gene_select_mapper_metric){
@@ -62,6 +63,7 @@ gene_selection_mapper_by_variability <- function(case_disease_component,
 #' @param num_gen_select Number of genes to be selected (those with the highest
 #' product value).
 #' @return Character vector with the names of the selected genes.
+#' @export
 gene_selection_by_sd_surv <- function(case_disease_component, cox_all_matrix,
                                       gene_select_surv_type, num_gen_select){
   # Same operation to both methods
