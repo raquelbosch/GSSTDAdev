@@ -57,14 +57,14 @@ employed by the standard optimal number of cluster finder method.
 Parameter not necessary if the "optimal_clust_mode" option is "silhouette"
 or the "clust_type" is "PAM".}
 
-\item{dim_reduction}{Boolean. Parameter indicating whether or not centering,
-scaling and dimensionality reduction of the data is wanted prior to partial
-clustering in Mapper. In dimensionality reduction, principal components that explain at least 80\% of the
-variance are chosen. This process is performed on each subset composed by
-the columns of the individuals that are part of each interval. TRUE indicates
-that centering, scaling and dimensionality reduction will be performed. FALSE
-means that this step will be omitted and clustering will be performed without
-transforming the data.}
+\item{dim_reduction}{Boolean. Parameter indicating whether or not centering
+and dimensionality reduction of the data is wanted prior to partial
+clustering in Mapper. In dimensionality reduction, the number of principal
+components is selected using the Gavish-Donoho method This process is
+performed on each subset composed bythe columns of the individuals that
+are part of each interval. TRUE indicates that centering and dimensionality
+reduction will be performed. FALSE means that this step will be omitted
+and clustering will be performed without transforming the data.}
 }
 \value{
 Returns a interger vector with the samples included in each cluster

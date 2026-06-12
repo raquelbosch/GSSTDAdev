@@ -132,14 +132,14 @@ samples_in_levels <- function(interval_data,filter_values){
 #' employed by the standard optimal number of cluster finder method.
 #' Parameter not necessary if the "optimal_clust_mode" option is "silhouette"
 #' or the "clust_type" is "PAM".
-#' @param dim_reduction Boolean. Parameter indicating whether or not centering,
-#' scaling and dimensionality reduction of the data is wanted prior to partial
-#' clustering in Mapper. In dimensionality reduction, principal components that explain at least 80% of the
-#' variance are chosen. This process is performed on each subset composed by
-#' the columns of the individuals that are part of each interval. TRUE indicates
-#' that centering, scaling and dimensionality reduction will be performed. FALSE
-#' means that this step will be omitted and clustering will be performed without
-#' transforming the data.
+#' @param dim_reduction Boolean. Parameter indicating whether or not centering
+#' and dimensionality reduction of the data is wanted prior to partial
+#' clustering in Mapper. In dimensionality reduction, the number of principal
+#' components is selected using the Gavish-Donoho method This process is
+#' performed on each subset composed bythe columns of the individuals that
+#' are part of each interval. TRUE indicates that centering and dimensionality
+#' reduction will be performed. FALSE means that this step will be omitted
+#' and clustering will be performed without transforming the data.
 #' @return Returns a interger vector with the samples included in each cluster
 #' for the specific level analyzed. The names of the vector values are the
 #' names of the samples and the vector values are the node number
@@ -150,9 +150,13 @@ clust_lev <- function(data_i, distance_type, clustering_type, linkage_type,
                       num_bins_when_clustering, dim_reduction){
   if (dim_reduction){
     # PCA for dimensionality reduction.
-    PCAobj <- prcomp(x=t(data_i), center = TRUE, scale. = TRUE)
-    cumu <- cumsum(PCAobj$sdev^2/sum(PCAobj$sdev^2)*100)
-    data_i <- t(PCAobj$x)[1:which(cumu > 80)[1],]
+    PCAobj <- prcomp(x=t(data_i), center = TRUE, scale. = FALSE)
+    data_i_centered <- scale(t(data_i), center = TRUE, scale = FALSE)
+    singular_values <- svd(data_i_centered, nu = 0, nv = 0)$d
+    beta <- nrow(data_i_centered)/ncol(data_i_centered)
+    tau <- optimal_SVHT_coef_gamma_unknown(beta) * stats::median(singular_values)
+    n_opt <- sum(singular_values > tau)
+    data_i <- t(PCAobj$x)[1:n_opt,]
   }
 
   #Distance type
@@ -187,7 +191,6 @@ clust_lev <- function(data_i, distance_type, clustering_type, linkage_type,
       cluster_indices_level <- rep(1,ncol(data_i))
       names(cluster_indices_level) <- colnames(data_i)
       return(cluster_indices_level)
-
     }
   } else if(clustering_type == "hierarchical"){
     level_hclust_out <- stats::hclust(level_dist, method = linkage_type)
@@ -286,14 +289,14 @@ clust_lev <- function(data_i, distance_type, clustering_type, linkage_type,
 #' histogram employed by the standard optimal number of cluster finder
 #' method. Parameter not necessary if the "optimal_clust_mode" option
 #' is "silhouette" or the "clust_type" is "PAM".
-#' @param dim_reduction Boolean. Parameter indicating whether or not centering,
-#' scaling and dimensionality reduction of the data is wanted prior to partial
-#' clustering in Mapper. In dimensionality reduction, principal components that explain at least 80% of the
-#' variance are chosen. This process is performed on each subset composed by
-#' the columns of the individuals that are part of each interval. TRUE indicates
-#' that centering, scaling and dimensionality reduction will be performed. FALSE
-#' means that this step will be omitted and clustering will be performed without
-#' transforming the data.
+#' @param dim_reduction Boolean. Parameter indicating whether or not centering
+#' and dimensionality reduction of the data is wanted prior to partial
+#' clustering in Mapper. In dimensionality reduction, the number of principal
+#' components is selected using the Gavish-Donoho method This process is
+#' performed on each subset composed bythe columns of the individuals that
+#' are part of each interval. TRUE indicates that centering and dimensionality
+#' reduction will be performed. FALSE means that this step will be omitted
+#' and clustering will be performed without transforming the data.
 #' @return List of interger vectors. Each of the vectors contains information
 #' about the nodes at each level and the individuals contained in them. The
 #' names of the vector values are the names of the samples and the vector
