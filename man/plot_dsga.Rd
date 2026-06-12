@@ -4,7 +4,11 @@
 \alias{plot_dsga}
 \title{plot dsga}
 \usage{
-plot_dsga(selected_matrix_disease_component, case_tag)
+plot_dsga(
+  selected_matrix_disease_component,
+  case_tag,
+  heatmap_colour_limits = c(-5, 5)
+)
 }
 \arguments{
 \item{selected_matrix_disease_component}{Disease component matrix of
@@ -18,6 +22,11 @@ One value should be used to indicate whether the patient is healthy and
 another value should be used to indicate whether the patient's sample is
 tumourous. The user will then be asked which one indicates whether
 the patient is healthy. Only two values are valid in the vector in total.}
+
+\item{heatmap_colour_limits}{Numeric vector of length 2 specifying the
+lower and upper limits of the heatmap color scale. Values outside this
+range are displayed using the extreme colors of the palette.
+-5 and 5 by default.}
 }
 \value{
 The heatmap of the dsga result.

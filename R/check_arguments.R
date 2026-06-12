@@ -378,6 +378,7 @@ check_arg_mapper <- function(full_data, filter_values,
 #' @description Check the vectors for the functions plot_mapper and plot_mapper_with_pie_chart.
 #' @param mapper_object A \code{mapper_obj} object.
 #' @param vector Vector containing the variable to be used for representation.
+#' Factor objects are permitted in the pie chart option.
 #' It must contain a single value per sample.
 #' @param class_vector "numeric" or "character". Variable indicating the type
 #' of vector depending on if it is to be used in \code{plot_mapper} or in
@@ -385,7 +386,7 @@ check_arg_mapper <- function(full_data, filter_values,
 #' @return No return, only checking function
 check_plot_vectors <- function(mapper_object, vector,
                                class_vector = "character") {
-  if (!is.vector(vector)){
+  if (!(is.vector(vector) | is.factor(vector))){
     stop("colour_by_variable or plot_mapper_with_pie_chart must be a vector")
   }
   if (any(duplicated(names(vector)))) {

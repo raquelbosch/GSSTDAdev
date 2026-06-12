@@ -10,6 +10,7 @@ check_plot_vectors(mapper_object, vector, class_vector = "character")
 \item{mapper_object}{A \code{mapper_obj} object.}
 
 \item{vector}{Vector containing the variable to be used for representation.
+Factor objects are permitted in the pie chart option.
 It must contain a single value per sample.}
 
 \item{class_vector}{"numeric" or "character". Variable indicating the type
